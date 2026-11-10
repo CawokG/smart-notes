@@ -1,6 +1,6 @@
 # Ближайшие задачи: Knowledge Ingestion V1
 
-Сверка на 2026-11-10; требования и инварианты — в [SPEC.md](../SPEC.md), результаты этапа 2 и ограничения — в [AGENT_HANDOFF.md](AGENT_HANDOFF.md). Выполненные пункты отмечены ниже; приоритеты обозначают порядок работы, а не разрешение обойти критерии безопасности.
+Сверка на 2026-11-10; требования и инварианты — в [SPEC.md](../SPEC.md), результаты этапов 1–3 и ограничения — в [AGENT_HANDOFF.md](AGENT_HANDOFF.md). Выполненные пункты отмечены ниже; приоритеты обозначают порядок работы, а не разрешение обойти критерии безопасности.
 
 ## 1. Основа и безопасный scan
 
@@ -22,12 +22,14 @@
 
 **Результат этапа 2:** 39 offline тестов PASS; корпус даёт 57/57 checkpoints, 18 точных EvidenceSpan, два новых claim, одно подкрепление и обоснованные defer. Schema2 сохраняет stage1 store и исходные SHA256-prefixed IDs; это осознанное расхождение с предложенными в §4 UUIDv7/ULID. FakeLLM — сценарная фикстура, не реальный extractor. Повтор `plan` продолжает локальные checkpoints, но CLI `resume`, commit/recovery и live observe не закрыты. Gates B/C подтверждены только для offline пути; V1 в целом не готов.
 
-## 3. Capability spike MuninnDB — параллельно с основой при доступном backend
+## 3. Capability spike MuninnDB
 
-- [ ] Использовать закреплённый release MuninnDB v0.9.0 и checksum из `integrations/muninn-compatibility.md`; получить изолированный тестовый vault и проверить фактические auth, read/write, observe и влияние на счётчики, поиск кандидатов и точный полный поиск marker. Проверка запуска и health endpoint на Linux x86-64 уже описана в матрице. Не считать документацию `develop` проверкой установленного API.
-- [ ] Дополнить [матрицу совместимости](../integrations/muninn-compatibility.md) результатами, версиями, способом воспроизведения и безопасными fallback. Если точный поиск marker не подтверждён, recovery при неизвестном результате записи должен останавливаться на `needs_manual_repair`.
+- [x] Использовать закреплённый release MuninnDB v0.9.0 и checksum из `integrations/muninn-compatibility.md`; получить изолированный тестовый vault и проверить фактические auth, read/write, observe и влияние на счётчики, поиск кандидатов и точный полный поиск marker. Проверять установленный binary, не считать документацию `develop` подтверждением API.
+- [x] Дополнить [матрицу совместимости](../integrations/muninn-compatibility.md) результатами, версиями, способом воспроизведения и безопасными fallback. Если точный поиск marker не подтверждён, recovery при неизвестном результате записи должен останавливаться на `needs_manual_repair`.
 
 **Готово, когда:** проведён воспроизводимый smoke-test на pinned версии либо явно документированы недоступность backend и непроверенные возможности. Отсутствие backend не блокирует offline задачи 1–2, но блокирует утверждение о готовой live-интеграции.
+
+**Результат этапа 3:** `scripts/smoke_muninn.py` на Linux x86-64 проверяет checksum, запускает собственный temporary loopback instance с отключёнными enrichment/embeddings и удаляет его после проверки. Auth, full POST → observe GET/read-back, MCP candidate tools и native name collision подтверждены. Observe GET/ACTIVATE сохраняют `access_count 0→0` в двухсекундном окне; full-контроль также `0→0`, поэтому полная cognitive immutability не доказана. Active marker lookup на спокойном fixture полон: **205/205**, страницы 200+5+empty, exact tags/AND/decoys проверены. **Общий exhaustive lookup UNSUPPORTED:** archived требует отдельного фильтра, `state=soft_deleted` игнорируется, `/api/deleted` возвращает максимум 100 из 101 tombstones и игнорирует offset. Этап 4 обязан сохранить `needs_manual_repair` без повторного POST при неизвестном результате. 47 offline тестов PASS (39 прежних + 8 smoke safety), independent supervisor live replay PASS. Product adapter и publication пока отсутствуют.
 
 ## 4. Review, безопасная публикация и восстановление
 
