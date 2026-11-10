@@ -2,7 +2,7 @@
 
 This is an incomplete implementation. It provides a local snapshot scan only; it does not extract claims or connect to MuninnDB.
 
-The current implementation accepts one UTF-8 `.txt` or `.md` file per scan. Folder ingestion, Obsidian link processing, and entity and relationship extraction are not implemented yet; they remain in the V1 target scope. See [SPEC.md](SPEC.md) and [the next tasks](docs/NEXT_TASKS.md).
+The current implementation accepts one UTF-8 `.txt` or `.md` file per scan. V1 targets importing multiple selected files or recursively importing a folder, including an Obsidian vault as ordinary text and Markdown files. Special handling of Obsidian links and typed fields is deferred beyond V1. Entity and relationship extraction is not implemented yet. See [SPEC.md](SPEC.md) and [the next tasks](docs/NEXT_TASKS.md).
 
 Python 3.12+: `python -m knowledge_ingestion.cli scan ./note.md --data ./data` prints a JSON scan report. Snapshots and a SQLite revision index are stored in the data directory. Run tests with `python -m unittest discover -s tests`.
 

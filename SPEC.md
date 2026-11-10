@@ -22,7 +22,7 @@
 | MuninnDB и recovery | Адаптера и записи нет. В удалённой ветке закреплена версия MuninnDB v0.9.0 и описана проверка запуска и health endpoint на Linux x86-64; read/write, observe, Entity Graph и поиск marker не проверены. Подробности — в `integrations/muninn-compatibility.md`. Outbox и восстановление отсутствуют. |
 | Фикстуры и документация | Упомянутые в §12 `fixtures/obsidian/` и `fixtures/expected.json` в текущем дереве отсутствуют и должны быть созданы; их содержимое не приложено к задаче. `ARCHITECTURE.md`, `KNOWN_LIMITATIONS.md`, demo и отчёт о качестве отсутствуют. |
 
-README описывает ограничение текущего прототипа одним файлом. Это описание текущей реализации, а не сокращение согласованной цели V1: папки и указанный в §1.3 Obsidian subset остаются обязательными. Фактический интерфейс сегодня — `python -m knowledge_ingestion.cli scan <file> --data <dir>`; примеры остальных команд в §8 являются целевыми. Наличие `sqlite`-индекса и повторяемого scan не доказывает безопасность commit или полноту инвариантов V1.
+README описывает ограничение текущего прототипа одним файлом. Это описание текущей реализации, а не сокращение согласованной цели V1: один или несколько файлов и рекурсивный импорт папки, включая папку Obsidian, остаются обязательными; специальный разбор Obsidian вынесен за V1. Фактический интерфейс сегодня — `python -m knowledge_ingestion.cli scan <file> --data <dir>`; примеры остальных команд в §8 являются целевыми. Наличие `sqlite`-индекса и повторяемого scan не доказывает безопасность commit или полноту инвариантов V1.
 
 **Уточнение к текущему scanner:** путь разрешается через `Path.resolve()` до проверки `is_symlink()`, поэтому отказ от символической ссылки на исходный файл не подтверждён и текущую проверку нельзя считать защитой от неё. При расширении на каталоги необходимо отдельно определить и проверить политику symlink и границ корня. Существующие таблицу и snapshot следует учесть при миграции, не теряя данные.
 
@@ -30,7 +30,7 @@ README описывает ограничение текущего прототи
 
 Твоя задача — **реализовать работающий прототип V1**, а не только составить план или псевдокод. В первую очередь исследуй целевой репозиторий приложения, если он предоставлен, и интегрируйся с его языком, архитектурой и конфигурацией. Если репозитория нет, создай самостоятельный CLI-пакет по reference stack. Не переписывай существующий UI: прототип управляется CLI и сохраняет машиночитаемый отчёт.
 
-**Обязательные результаты:** исходный код; миграции SQLite; работающий адаптер MuninnDB; конфиг; команды `scan`, `plan`, `review`, `commit`, `status`, `resume`; тесты без внешних LLM; интеграционные smoke-тесты для реальной MuninnDB; небольшой тестовый Obsidian-корпус; README с запуском и ограничениями; JSON Change Set; отчёт по качеству; список найденных расхождений с API.
+**Обязательные результаты:** исходный код; миграции SQLite; работающий адаптер MuninnDB; конфиг; команды `scan`, `plan`, `review`, `commit`, `status`, `resume`; тесты без внешних LLM; интеграционные smoke-тесты для реальной MuninnDB; небольшой синтетический корпус нескольких файлов и вложенной папки; README с запуском и ограничениями; JSON Change Set; отчёт по качеству; список найденных расхождений с API.
 
 **Три правила исполнения:**
 1. Не выдумывать и не имитировать нативные операции MuninnDB. Проверять фактические endpoints, типы и режимы auth на зафиксированной версии. Все непроверенные возможности — за `MuninnAdapter` и feature flags; при отсутствии функции реализовать безопасный fallback.
@@ -43,12 +43,12 @@ README описывает ограничение текущего прототи
 
 ### 1.1. Пользовательская цель
 
-Из одиночного `.txt`/`.md` или папки связанных Markdown-заметок получить контролируемый набор **сущностей, алиасов, атомарных утверждений и подтверждающих фрагментов**, сверить их с существующей памятью MuninnDB и предложить **повторяемый, обозримый Change Set**. При подтверждении безопасные новые утверждения превращаются в engram MuninnDB, а вспомогательная структура сохраняется в локальном транзакционном реестре.
+Из одного или нескольких выбранных `.txt`/`.md` файлов либо из папки с вложенными `.txt`/`.md` файлами получить контролируемый набор **сущностей, алиасов, атомарных утверждений и подтверждающих фрагментов**, сверить их с существующей памятью MuninnDB и предложить **повторяемый, обозримый Change Set**. При подтверждении безопасные новые утверждения превращаются в engram MuninnDB, а вспомогательная структура сохраняется в локальном транзакционном реестре.
 
 ### 1.2. Сквозной сценарий
 
-1. Пользователь указывает файл или корень папки Obsidian.
-2. `scan` снимает слепок источника, разбирает структуру и формирует индекс заметок/ссылок без записи знаний.
+1. Пользователь указывает один или несколько файлов либо корень папки, в том числе папки хранилища Obsidian.
+2. `scan` определяет набор подходящих файлов, снимает их слепки и готовит chunks без записи знаний; специальные ссылки и поля Obsidian не разбираются.
 3. `plan` запускает контекстное извлечение и сверку, формирует JSON-план с классами `create`, `reinforce`, `skip_duplicate`, `defer` и `conflict_warning`.
 4. `review` показывает компактное резюме и спорные случаи; в V1 — редактируемый YAML/JSON решений либо CLI команды, без нового UI.
 5. `commit` применяет только разрешённые операции, проверяет результат в MuninnDB, отмечает выполненные шаги.
@@ -56,8 +56,9 @@ README описывает ограничение текущего прототи
 
 ### 1.3. Входит в V1
 
-- `TXT`, `Markdown`, UTF-8; папки с вложенными `.md` и `.txt`.
-- Obsidian subset: frontmatter (`aliases`, `tags`), заголовки, `[[note]]`, `[[path/note|label]]`, `[[note#Heading]]`, обычные Markdown-ссылки на локальные файлы; индекс связей между документами. Обрабатывать unresolved/ambiguous link без выдуманных разрешений.
+- Один или несколько явно указанных UTF-8 файлов `.txt`/`.md`, в том числе из разных каталогов, за один запуск; альтернативно — рекурсивный импорт подходящих файлов из указанной папки. Порядок обработки и устранение повторов детерминированы.
+- Папка Obsidian принимается как обычная папка с Markdown: заметки импортируются, служебные и скрытые каталоги, включая `.obsidian`, пропускаются. Это не импорт вложений, плагинов или специальных возможностей хранилища.
+- Заголовки и абзацы Markdown можно использовать для chunking. Wikilinks, Markdown-ссылки и frontmatter остаются текстом источника: V1 не разрешает ссылки между документами и не интерпретирует типизированные поля, aliases или tags как структурированные метаданные.
 - Структурное chunking больших заметок; последовательная обработка каждого документа и «digest so far»; общий контекст по группе документов и уже подготовленным в текущем импорте данным.
 - LLM-извлечение сущностей, упоминаний и атомарных утверждений с обязательным дословным свидетельством; pluggable LLM provider + `FakeLLM`.
 - Базовые типы: `person`, `project`, `pet`, `organization`, `account`, `asset`, `task`, `place`, `other` (расширяемый справочник, не жёсткая онтология).
@@ -70,7 +71,7 @@ README описывает ограничение текущего прототи
 ### 1.4. НЕ входит в V1
 
 - Полный парсинг PDF/DOCX/изображений, OCR, вложений и произвольных бинарных файлов.
-- Интерпретация Obsidian Canvas, Dataview, сложных плагинов, embedded blocks (`![[...]]`) как раскрытого содержимого; ссылки сохраняются метаданными.
+- Специальная обработка Obsidian: разрешение wikilinks и Markdown-ссылок между документами, граф связей, типизированные поля/frontmatter, Canvas, Dataview, плагины и раскрытие embedded blocks (`![[...]]`). Исходный текст сохраняется в snapshot; ссылки не переходятся и не исполняются.
 - Полный temporal reasoner, автоматическое `supersedes` и разрешение конфликтов без пользователя.
 - Автоматическое слияние людей/аккаунтов, особенно при одинаковых именах; сложная коррекция онтологии.
 - Фоновая непрерывная синхронизация папки, мониторинг файлов, распараллеливание commit, полноценный UI-review.
@@ -90,11 +91,11 @@ README описывает ограничение текущего прототи
 ### 2.1. Логическая архитектура
 
 ```text
-Source files / Obsidian folder
+One or more source files / folder (including an Obsidian vault)
              |
      Source scanner + parser   (pure/deterministic)
              |
-     document revisions + link index + source spans
+     document revisions + source spans
              |
      structural chunks -- sequential per document
              |
@@ -145,14 +146,12 @@ Source files / Obsidian folder
   "relative_path": "People/Max.md",
   "revision_id": "rev_...",
   "sha256_utf8": "...",
-  "frontmatter": {"aliases": ["Макс", "Max"], "tags": ["person"]},
-  "wikilinks": [{"raw": "[[Projects/Atlas|Atlas]]", "target_doc_id": "doc_...", "resolution": "resolved"}],
   "captured_at": "2026-11-10T00:00:00Z"
 }
 ```
 
-- `collection_id` идентифицирует корень импорта/проект, а не произвольную папку по последнему пути.
-- `document_id` стабилен при неизменной относительной ссылке; переезд/rename в V1 — новый кандидат на соответствие, не автослияние. Совпадение SHA-256 само по себе не доказывает одинаковый документ (возможны одинаковые шаблоны).
+- Для папки `collection_id` идентифицирует её канонический корень. Для явно выбранных файлов collection идентифицируется детерминированным множеством канонических file URI; порядок ввода и повторные пути не меняют collection. Разные наборы файлов могут образовывать разные collections.
+- `document_id` стабилен внутри collection: в папке по относительному пути, в наборе файлов по каноническому file URI. Совпадающие basenames в разных каталогах не объединяются; переезд/rename в V1 — новый кандидат на соответствие, не автослияние. Совпадение SHA-256 само по себе не доказывает одинаковый документ (возможны одинаковые шаблоны).
 - `revision_id` привязан к `document_id + content hash`.
 - Snapshot исходного текста сохранять локально в `data/snapshots/` контент-адресуемо; это обеспечивает проверяемость evidence независимо от будущих правок файлов. Не пересылать snapshot целиком по логам.
 - `Chunk` имеет `chunk_id`, `revision_id`, `start_byte`, `end_byte`, `heading_path`, `overlap_range`, `ordinal`, `context_refs`. Evidence может указывать на любой диапазон исходного snapshot, а не только на текущий chunk.
@@ -179,7 +178,7 @@ Source files / Obsidian folder
 - Alias нормализуется NFKC + casefold + trim + collapse whitespace; исходное написание не теряется. Для `@handle` сохранять service scope, чтобы `@alex` в разных сервисах не сливался автоматически.
 - `person/project/pet/account/...` — **тип**, а не доказательство идентичности; разрешать неизвестные кастомные типы через `other` с `type_label`.
 - При коллизии alias с >1 Entity ID — `ambiguous`; exact match без контекста не разрешает её.
-- Название файла и frontmatter `aliases` — **кандидаты**, причём сам файл ещё не обязательно описывает существо с этим именем. Система может принять alias автоматически только когда связь «этот файл описывает данную сущность» подкреплена содержимым/структурой и не конфликтует с индексом.
+- Название файла само по себе не доказывает, что он описывает сущность с этим именем. V1 не извлекает aliases из структурированного frontmatter; возможные алиасы из текста требуют прямого evidence и проверки контекста и коллизий.
 - Не создавать `Entity` на основе одного местоимения.
 
 ### 4.3. Claim и EvidenceSpan
@@ -206,7 +205,7 @@ Source files / Obsidian folder
 - `predicate` — extensible `snake_case`, но для MVP словарь с нормализацией распространённых форм (`works_on`, `owns`, `member_of`, `located_at`, `has_status`, `uses`, `alias_of`, `related_to`) и значение `other:<safe_slug>`; ограничить произвольное разрастание синонимов.
 - `qualifiers` JSON; два утверждения нельзя автоматически считать одинаковыми, если существенно отличаются qualifiers, polarity, modality, valid-time.
 - `valid_time` — время действия факта. `recorded_at` — когда мы его узнали. Неразрешённую относительную дату («вчера») хранить как исходный текст `temporal_expression` и `precision=unresolved`; абсолютную дату вычислять **только** если явно известна дата источника.
-- `EvidenceSpan`: `id`, `revision_id`, `start_byte`, `end_byte`, `quote`, `origin` (`body|frontmatter|title`), `source_role` (`direct|reported|metadata`), `captured_at`, `parser_version`.
+- `EvidenceSpan`: `id`, `revision_id`, `start_byte`, `end_byte`, `quote`, `origin` (`body|title`; frontmatter в V1 рассматривается как текст body), `source_role` (`direct|reported|metadata`), `captured_at`, `parser_version`.
 - LLM присылает `quote` и `chunk_ordinal`/`occurrence_index`, а **валидатор**, не LLM, устанавливает точные byte offsets по исходному snapshot. Если якорь не находится или неоднозначен — повторная попытка с уточнением; затем `unresolved`. Не публиковать факт без привязки.
 - Claim key: `hash(vault_id, resolved subject ID, canonical predicate, typed object, normalized qualifiers, polarity, modality, normalized valid_time)`. Это **идентичность утверждения**, а не доказательство истинности. Для совпадающих утверждений объединять evidence, а не создавать новые claim.
 
@@ -250,10 +249,9 @@ Reference storage — SQLite с включённым `foreign_keys=ON`, WAL, м�
 
 | Таблица | Минимальные поля / гарантия |
 |---|---|
-| `collections` | id, root_uri, label, vault_id, created_at |
-| `documents` | id, collection_id, relative_path, last_seen_revision_id |
+| `collections` | id, source_kind (`directory` или `files`), root_uri nullable, канонические URI файлов для `files`, label, vault_id, created_at |
+| `documents` | id, collection_id, относительный путь или канонический file URI, last_seen_revision_id |
 | `revisions` | id, document_id, content_hash, snapshot_path, parser_version, captured_at, UNIQUE(document_id,content_hash) |
-| `document_links` | from_revision_id, raw_target, target_document_id nullable, resolution, heading |
 | `chunks` | id, revision_id, ordinal, byte_start/end, heading_path, digest_after nullable |
 | `jobs` | id, collection_id, config_hash, status, stage, created_at, updated_at, error |
 | `job_documents` | job_id, revision_id, stage, last_completed_chunk, checkpoint |
@@ -278,17 +276,17 @@ Reference storage — SQLite с включённым `foreign_keys=ON`, WAL, м�
 
 ### S0. Scan / Source Intake — deterministic
 
-**Вход:** путь к одному файлу или папке; vault ID; опции размера.  
-**Выход:** `SourceCollection`, список документов и ревизий, links, frontmatter, headings, source snapshots, chunks.  
-**Алгоритм:**
-1. Рекурсивный обход с allowlist `.md/.txt`; игнорировать `.obsidian/`, `.git/`, симлинки вне root, бинарные файлы, скрытые служебные каталоги. Защита от path traversal и zip slip (архивы пока не принимаются).
-2. Сохранить snapshot byte-for-byte; для UTF-8 BOM установить нормализованное представление отдельно, не потерять исходную привязку диапазонов. Некорректный UTF-8 — предупреждение + skip, без silent replacement.
-3. Парсить YAML frontmatter безопасным parser (`safe_load`), не исполнять YAML custom tags.
-4. Сформировать двупроходный индекс локальных файлов и wikilinks: exact path → basename → ambiguous/unresolved. Для `[[note|alias]]` display label не означает идентичность alias сущности.
-5. Chunking по headings, спискам и границам абзацев; приблизительно 1.5–3k токенов/chunk (по текущему tokenizer/provider); перекрытие ~150–250 токенов; очень длинные блоки резать по предложениям, затем по токенам. Не терять источник offsets. Дефолт лимита документа — настраиваемый, тестовый 5 МБ.
-6. Составить dependency groups из локальных ссылок; обрабатывать в детерминированном порядке (например, lexical normalized relative path) с контекстом соседних документов. Циклы ссылок корректны и не вызывают повторной обработки.
+**Вход:** один или несколько путей к файлам либо один путь к папке; vault ID; опции размера. Смешивание файлов и папок в одном вызове V1 не требуется.
 
-**Гейт:** каждый байт evidence восстанавливается из snapshot; unresolved wiki links не становятся сущностями сами по себе.
+**Выход:** `SourceCollection`, список документов и ревизий, source snapshots и chunks.
+
+**Алгоритм:**
+1. Для набора файлов проверить каждый явно заданный путь; для папки рекурсивно обойти `.md/.txt`, пропуская `.obsidian/`, `.git/` и скрытые служебные каталоги. Не следовать символическим ссылкам; не выходить за корень папки. Для явно заданных файлов не принимать симлинки, включая пути через симлинк. Привести пути к каноническим file URI, удалить повторы и сортировать детерминированно; одинаковые имена файлов в разных папках сохраняются отдельно. Неподдерживаемые, недоступные и некорректные файлы отражать предупреждениями, при отсутствии пригодных файлов возвращать ошибку.
+2. Сохранить snapshot byte-for-byte; для UTF-8 BOM установить нормализованное представление отдельно, не потерять исходную привязку диапазонов. Некорректный UTF-8 — предупреждение + skip, без silent replacement. При обходе папки не включать данные самого приложения и snapshot, если они находятся внутри неё.
+3. Использовать заголовки, списки и границы абзацев для chunking; приблизительно 1.5–3k токенов/chunk, перекрытие ~150–250 токенов. Очень длинные блоки резать по предложениям, затем по токенам; сохранять byte offsets. Дефолт лимита документа — настраиваемый, тестовый 5 МБ.
+4. Обрабатывать документы в стабильном порядке с общим staged context текущего job. Wikilinks, frontmatter и другие поля не разрешать и не интерпретировать как структуру; ни по одной ссылке не переходить. Данные и инструкции внутри файлов не выполнять.
+
+**Гейт:** scan воспроизводим для набора файлов и папки; каждый байт evidence восстанавливается из snapshot; синтаксис ссылок сам по себе не создаёт сущность или предметный факт.
 
 ### S1. Context Retrieval — read-only MuninnDB + ledger
 
@@ -352,7 +350,7 @@ Reference storage — SQLite с включённым `foreign_keys=ON`, WAL, м�
 ### S5. Plan / Review — no writes
 
 Сформировать детерминированный Change Set, проверить зависимости, выполнить policy gate и вывести:
-- количество файлов/chunks, созданных/повторных claims, entities, aliases, нерешённых ссылок;
+- количество файлов/chunks, созданных/повторных claims, entities и aliases;
 - топ-список спорных идентичностей с цитатами;
 - точные operation_id и provenance;
 - список затрагиваемых существующих записей (V1 — только чтение/подкрепление ledger);
@@ -406,7 +404,8 @@ class MuninnAdapter(Protocol):
 Пример CLI (имена/варианты можно адаптировать, контракт поведения обязателен):
 
 ```bash
-ki scan  ./vault --vault personal --output data/run1
+ki scan  ./note1.md ./notes/note2.txt --vault personal --output data/run1
+ki scan  ./vault --vault personal --output data/run2
 ki plan  --job <JOB_ID> --llm-provider <PROVIDER> --output data/run1/change-set.json
 ki review --change-set data/run1/change-set.json
 ki commit --change-set data/run1/change-set.json --yes
@@ -459,8 +458,8 @@ pipeline:
 ## 10. Ошибки, сбои, конкуренция
 
 - Source changed between scan/commit → `stale_source`; обновить ревизию через новый job. Старый Change Set не коммитить.
-- Invalid YAML → сохранить warning, парсить body как текст; не терять заметку целиком.
-- Unknown wikilink / collision → unresolved link; не создавать entity по неразрешённому таргету.
+- Frontmatter, включая некорректный YAML, обрабатывать как исходный текст; YAML не разбирать и custom tags не исполнять.
+- Ссылка в исходном тексте не разрешается в V1 и сама по себе не доказывает существование сущности или связи.
 - LLM schema/quote invalid → retry; после исчерпания `needs_attention` и точная позиция chunk.
 - Muninn unavailable → `blocked_backend`; fake/dry-run остаётся доступным; не терять локальные результаты.
 - Muninn POST timeout → `unknown_write_outcome`, требовать reconciliation; НЕ дублировать автоматически.
@@ -481,8 +480,8 @@ pipeline:
 
 Обязательные сценарии:
 
-1. **Alias:** frontmatter `Макс/Максим` + `@max_dev` в тексте разрешаются в одного `person` только при подтверждённом контексте; алиас хранит evidence и scope.
-2. **Cross-file:** `[[Projects/Atlas]]` разрешается как ссылка на документ, а не как доказательство участия человека в проекте.
+1. **Alias:** явно подтверждённые текстом `Макс/Максим` и `@max_dev` разрешаются в одного `person` только при подтверждённом контексте; алиас хранит evidence и scope.
+2. **Cross-file:** несколько выбранных файлов обрабатываются как один job с общим staged context; `[[Projects/Atlas]]` не разрешается и сам по себе не доказывает участие человека в проекте.
 3. **Same name:** два разных «Алексей» в разных заметках остаются двумя ID либо `unresolved`, никогда не merge-ятся по имени.
 4. **Duplicate:** одно предложение о `Максим works_on Atlas` в двух файлах становится одним canonical claim и двумя evidence.
 5. **Uncertainty:** «Возможно, ...», «Планирует ...», «Говорят, ...», вопросительный контекст не становятся plain positive fact.
@@ -494,7 +493,7 @@ pipeline:
 11. **UTF-8:** кириллица, emoji, BOM, вложенная Markdown-разметка не ломают evidence byte spans.
 12. **Provider outage:** rate limit/timeout не делает chunk completed, resume повторяет корректно.
 13. **Read-only:** если есть observe-token, read phase не меняет access counters; иначе limitation в отчёте.
-14. **Unresolvable link:** отсутствующая Obsidian note остаётся unresolved, без падения.
+14. **Входы и ссылки:** один файл, несколько файлов из разных каталогов и папка с вложенной заметкой обрабатываются; повторные пути не дублируют документы, одинаковые имена в разных каталогах не сливаются. Отсутствующая цель `[[ссылки]]` не вызывает перехода или ошибки.
 15. **Native collision:** имя Entity Graph MuninnDB глобально/повторяется → собственные UUID entities остаются различными.
 
 Эталонные ожидаемые факты для созданного корпуса следует записать в `fixtures/expected.json`; он предназначен для проверки семантики, не для сравнения побуквенного JSON LLM.
@@ -544,7 +543,7 @@ pipeline:
 
 ### Фаза B — Deterministic foundation
 
-- Pydantic/JSON schema, SQLite schema/migrations, source snapshots, links, parser, chunks, CLI scan.
+- Pydantic/JSON schema, SQLite schema/migrations, source snapshots, chunks, CLI scan для нескольких файлов и рекурсивной папки, включая папку Obsidian как обычный набор заметок.
 - Claim fingerprint, evidence anchor, staged vs committed, source revision dedupe.
 - Golden fixtures и unit tests.
 
@@ -572,7 +571,7 @@ pipeline:
 
 ### V1.1 — корректность Obsidian и управляемый review (первый приоритет)
 
-- Улучшенная поддержка wikilinks, block IDs, embeds, aliases, frontmatter, backlinks; более умная группировка заметок.
+- При необходимости добавить специальный разбор wikilinks, block IDs, embeds, aliases и типизированного frontmatter, backlinks и группировку связанных заметок; сохранять неоднозначность и не исполнять содержимое.
 - Review в существующем пользовательском интерфейсе: карточки нерешённых кандидатов, пакетные решения, confidence с объяснениями.
 - Журнал пользовательских решений и правила, применимые к будущим импортам.
 - Уточнение alias scope; сравнение с существующими handwritten notes и legacy engram, не созданными импортёром.
@@ -626,7 +625,7 @@ pipeline:
 |---|---|---|
 | Muninn native Entity Graph vs app canonical identities | отдельный минимальный identity ledger + optional native candidate lookup | после capability spike и тестов омонимов |
 | SQLite — «вторая база знаний»? | нет: только точная идентичность, provenance, workflow state и structured claim indexes; память текста остаётся в MuninnDB | если MuninnDB получит полноценные ID/alias/claim query с транзакциями |
-| Полный импорт Obsidian vault | поддержать безопасный Markdown subset + ссылочный граф | V1.1 |
+| Папка Obsidian | V1 рекурсивно импортирует обычные `.md/.txt` как файлы; служебные каталоги пропускаются | специальный разбор ссылок и полей — V1.1 |
 | External legacy engrams | использовать как контекст и возможные совпадения; не auto-merge | V1.1–V2 |
 | Автоматическое разрешение противоречий | нет; warning/defer | V2 |
 | Неизвестный stack существующего приложения | адаптировать стек; в пустом проекте Python reference | при старте реализации |
