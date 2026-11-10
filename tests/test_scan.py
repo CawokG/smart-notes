@@ -6,6 +6,7 @@ from pathlib import Path
 
 from knowledge_ingestion.cli import scan, stable_id
 from knowledge_ingestion.storage import migrate
+from knowledge_ingestion.contracts import SCHEMA_VERSION
 
 
 class ScanTest(unittest.TestCase):
@@ -67,7 +68,7 @@ class ScanTest(unittest.TestCase):
         p = self.root / 'new.md'; p.write_text('new')
         scan(p, self.data); scan(p, self.data)
         with sqlite3.connect(self.data / 'ledger.sqlite3') as db:
-            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], 2)
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], SCHEMA_VERSION)
             self.assertEqual(db.execute('SELECT * FROM revisions').fetchall(), [('old', 'old.md', 'hash', 'old-snapshot')])
             self.assertEqual(db.execute('SELECT COUNT(*) FROM source_revisions').fetchone()[0], 1)
 
@@ -106,7 +107,7 @@ class ScanTest(unittest.TestCase):
             db.execute('PRAGMA foreign_keys=ON')
             migrate(db)
             migrate(db)
-            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], 2)
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], SCHEMA_VERSION)
             for table, rows in before.items():
                 self.assertEqual(db.execute(f'SELECT * FROM {table}').fetchall(), rows)
             self.assertEqual(db.execute('PRAGMA foreign_key_check').fetchall(), [])

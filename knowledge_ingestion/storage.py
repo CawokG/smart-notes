@@ -2,7 +2,7 @@
 
 Planning never writes the committed entity/alias/claim/mention projections.
 Evidence is immutable; job_evidence and claim_evidence give it staged/committed
-membership. There is deliberately no publication method in this module.
+membership. Publication state is additive; commit.py owns publication.
 """
 import json
 import os
@@ -27,6 +27,32 @@ def migrate(db):
     if version > SCHEMA_VERSION:
         raise ValueError('ledger schema is newer than this application')
     if version == SCHEMA_VERSION:
+        return
+    if version == 2:
+        with db:
+            db.execute('BEGIN IMMEDIATE')
+            for statement in (
+                '''CREATE TABLE review_decisions (
+                    seq INTEGER PRIMARY KEY, change_set_id TEXT NOT NULL,
+                    operation_id TEXT NOT NULL, actor TEXT NOT NULL,
+                    rationale TEXT NOT NULL, ts TEXT NOT NULL,
+                    previous_decision TEXT NOT NULL, decision TEXT NOT NULL,
+                    FOREIGN KEY(change_set_id,operation_id) REFERENCES operations(change_set_id,id))''',
+                '''CREATE TABLE commit_sessions (
+                    change_set_id TEXT PRIMARY KEY REFERENCES change_sets(id),
+                    payload_hash TEXT NOT NULL, config_hash TEXT NOT NULL,
+                    backend_identity TEXT NOT NULL, expected_revision TEXT NOT NULL,
+                    actor TEXT NOT NULL, confirmed_at TEXT NOT NULL)''',
+                '''CREATE TABLE outbox (
+                    operation_id TEXT PRIMARY KEY, change_set_id TEXT NOT NULL,
+                    marker TEXT NOT NULL UNIQUE, expected_payload TEXT NOT NULL,
+                    payload_hash TEXT NOT NULL, state TEXT NOT NULL,
+                    attempts INTEGER NOT NULL DEFAULT 0, attempted_at TEXT,
+                    observed_engram_id TEXT, outcome TEXT, error TEXT,
+                    FOREIGN KEY(change_set_id,operation_id) REFERENCES operations(change_set_id,id))''',
+            ):
+                db.execute(statement)
+            db.execute('PRAGMA user_version=3')
         return
     with db:
         db.execute('BEGIN IMMEDIATE')
@@ -132,6 +158,7 @@ def migrate(db):
         # Metadata may be unknown for historical v1 rows; do not invent it.
         db.execute('INSERT INTO revision_metadata SELECT id,NULL FROM source_revisions')
         db.execute('PRAGMA user_version=2')
+    migrate(db)
 
 
 def connect(data):

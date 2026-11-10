@@ -429,13 +429,15 @@ def plan(collection_id, data, provider, vault='personal', digest_budget=4096,
         config = {'version': VERSION, 'rules': RULES_VERSION, 'parser': PARSER_VERSION,
                   'schema': VERSION, 'prompt': PROMPT_VERSION, 'llm': provider.identity,
                   'temperature': 0, 'max_retries': 2, 'digest_budget_bytes': digest_budget,
-                  'context_mode': 'offline_ledger_only', 'external_candidates_hash': content_hash(context.external_candidates)}
+                  'context_mode': context.mode, 'external_candidates_hash': content_hash(context.external_candidates)}
+        if hasattr(context, 'identity'):
+            config['context_backend_identity'] = context.identity
         base = committed_revision(db, vault)
         job_id = stable_id('job', collection_id, vault, manifest, content_hash(config), base)
         change_id = stable_id('chg', job_id, base)
         ledger = Ledger(db, job_id, vault)
         existing = db.execute('SELECT payload,status,payload_hash FROM change_sets WHERE id=?', (change_id,)).fetchone()
-        if existing and existing['status'] == 'planned':
+        if existing and existing['status'] != 'needs_attention':
             value = json.loads(existing['payload'])
             if content_hash(value) != existing['payload_hash']:
                 raise ValueError('change_set_hash_mismatch')
@@ -516,12 +518,12 @@ def plan(collection_id, data, provider, vault='personal', digest_budget=4096,
                   'operations': operations, 'entities': ledger.staged('entities'),
                   'aliases': ledger.staged('aliases'), 'mentions': ledger.staged('mentions'),
                   'claims': ledger.staged('claims'), 'evidence': evidence,
-                  'warnings': [{'reason': 'offline_ledger_only', 'detail': 'MuninnDB retrieval and observe capabilities are unverified; no backend calls made.'}]
+                  'warnings': context.warnings
                               + stale_source_warnings(db, documents, vault),
                   'metrics': {'files': len(documents), 'chunks': sum(len(d['chunks']) for d in documents),
                               'chunks_completed': completed, 'provider_calls': event_counts['provider_call'],
                               'validation_errors': event_counts['validation_error'], 'provider_errors': event_counts['provider_error'],
-                              'muninn_read_calls': 0, 'muninn_write_calls': 0},
+                              'muninn_read_calls': context.read_calls, 'muninn_write_calls': 0},
                   'error': failure}
         payload = canonical_json(report)
         with db:

@@ -356,7 +356,7 @@ def characterize(probe: Probe, report):
     require(report["plugins"] == [], "unexpected enrichment/embedding plugins")
 
 
-def run(binary: Path, work_dir: Path, report):
+def run(binary: Path, work_dir: Path, report, characterize_instance=characterize):
     verify_binary(binary)
     # Check ambient config BEFORE --version too: main() loads it unconditionally.
     password, static_token = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
@@ -403,7 +403,7 @@ def run(binary: Path, work_dir: Path, report):
                     "no_embedder": "no embedder configured, semantic similarity disabled" in logs,
                     "no_enricher": "no enrich plugin configured, LLM enrichment disabled" in logs}
                 require(all(report["startup_disabled_plugins_log"].values()), "providers were not disabled")
-                characterize(probe, report)
+                characterize_instance(probe, report)
                 require(process.poll() is None, "daemon exited before checks completed")
             finally:
                 if process.poll() is None:

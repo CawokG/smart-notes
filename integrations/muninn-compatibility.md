@@ -53,7 +53,7 @@ All inherited `MUNINN*` variables are removed from the child environment. It set
 | MCP native entity tools | PASS, optional shortlist | `muninn_entity`, `muninn_find_by_entity`, `muninn_similar_entities` advertised and invoked successfully using observe bearer auth. Details below. |
 | Native identity separation | Not provided by name lookup | Two synthetic memories explicitly representing different people named Алексей appear in a single native aggregate (`mention_count=2`, two engram IDs). Preserve separate local identities. |
 | `idempotent_id` / MCP `op_id` receipts | UNVERIFIED | Fields exist in pinned source/schema; receipt persistence, crash behavior and payload binding were not smoke-tested. Do not use them to relax recovery. |
-| Product adapter / outbox / publication / crash recovery | NOT IMPLEMENTED | These remain stage 4 work. This script is an isolated characterization harness. |
+| Product adapter / outbox / publication / crash recovery | Stage 4 PASS with limits | `scripts/smoke_commit.py` independently exercises the real adapter/service in a fresh instance: known-ID recovery, explicit manual fallback after injected lost response/crash, repeat/reimport without extra POST. This capability spike remains a separate characterization harness. |
 
 ## Auth, endpoints and actual shapes for the next adapter
 
@@ -126,4 +126,4 @@ These fixtures supplied `entities:[{name,type}]` on REST writes; no automatic NL
 
 The smoke verifies unchanged **exposed access counters during a two-second window**, with real hits and a working counter positive control. It does not prove complete cognitive immutability. Pinned-source-only caution: `internal/engine/engine.go` `Read` fires `scoring.RecordFeedback` without an observe guard, while `Activate` guards several write paths; hidden scoring feedback is not measured by `access_count`. Use the observe key, document this limitation, and keep bounded context calls. Do not label all GET side effects as absent.
 
-The offline planner remains network-free and still performs zero backend writes. Real adapter wiring, review/commit/status/resume, locks/outbox, stale-plan validation, recovery tests and a real LLM remain unfinished. This stage establishes API facts and a conservative recovery boundary, not production integration readiness.
+The default offline planner remains network-free and performs zero backend writes. Stage 4 implements real adapter wiring, review/commit/status/resume, same-account vault locks/outbox, stale-plan validation and recovery tests; see `docs/AGENT_HANDOFF.md` and `scripts/smoke_commit.py`. Opt-in observe context has an explicit local fallback. Real LLM/final quality gates remain stage 5. Exhaustive-marker recovery is still unsupported; product recovery preserves that boundary and requires one authoritative local ledger per backend/vault. This does not establish production integration readiness or complete cognitive immutability.

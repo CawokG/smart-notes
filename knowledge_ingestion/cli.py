@@ -180,6 +180,27 @@ def scan(source, data: Path, limit: int = MAX_BYTES) -> dict:
     return {'version': '2.0', 'schema_version': SCHEMA_VERSION, 'parser_version': PARSER_VERSION, 'collection_id': collection_id, 'source_kind': kind, 'root_uri': root.as_uri() if root else None, 'documents': docs, 'warnings': sorted(warnings, key=lambda w: (w['path'], w['reason']))}
 
 
+def backend_options(parser):
+    parser.add_argument('--backend', choices=['muninn', 'fake'], default='muninn')
+    parser.add_argument('--muninn-url', default='http://127.0.0.1:8475')
+    parser.add_argument('--observe-token-env', default='MUNINN_OBSERVE_TOKEN')
+    parser.add_argument('--full-token-env', default='MUNINN_FULL_TOKEN')
+    parser.add_argument('--fake-store', type=Path)
+
+
+def configured_backend(args, vault):
+    if args.backend == 'fake':
+        if args.fake_store is None:
+            raise ValueError('explicit_fake_store_required')
+        from .fake_backend import FakeBackend
+        return FakeBackend(args.fake_store, vault=vault)
+    if args.fake_store is not None:
+        raise ValueError('fake_store_requires_fake_backend')
+    from .muninn import MuninnAdapter
+    return MuninnAdapter(args.muninn_url, vault, os.environ.get(args.observe_token_env),
+                         os.environ.get(args.full_token_env))
+
+
 def main():
     parser = argparse.ArgumentParser(prog='ki')
     sub = parser.add_subparsers(dest='command', required=True)
@@ -187,7 +208,7 @@ def main():
     s.add_argument('source', type=Path, nargs='+')
     s.add_argument('--data', type=Path, default=Path('data'))
     s.add_argument('--max-bytes', type=int, default=MAX_BYTES)
-    p = sub.add_parser('plan', help='build an offline ChangeSet; never publish')
+    p = sub.add_parser('plan', help='build a ChangeSet; never publish')
     p.add_argument('--collection', required=True)
     p.add_argument('--data', type=Path, default=Path('data'))
     p.add_argument('--vault', default='personal')
@@ -195,27 +216,115 @@ def main():
     p.add_argument('--fixture', type=Path, required=True)
     p.add_argument('--digest-bytes', type=int, default=4096)
     p.add_argument('--output', type=Path)
+    p.add_argument('--context', choices=['offline', 'muninn-observe'], default='offline')
+    p.add_argument('--muninn-url', default='http://127.0.0.1:8475')
+    p.add_argument('--observe-token-env', default='MUNINN_OBSERVE_TOKEN')
+    r = sub.add_parser('review', help='inspect or record operation decisions')
+    r.add_argument('--change-set', required=True, help='persisted ID or original JSON file')
+    r.add_argument('--data', type=Path, default=Path('data'))
+    r.add_argument('--decisions', type=Path)
+    r.add_argument('--actor')
+    c = sub.add_parser('commit', help='publish approved operations after confirmation')
+    c.add_argument('--change-set', required=True)
+    c.add_argument('--data', type=Path, default=Path('data'))
+    c.add_argument('--yes', action='store_true')
+    c.add_argument('--actor', required=True)
+    c.add_argument('--expected-config-hash')
+    backend_options(c)
+    t = sub.add_parser('status')
+    t.add_argument('--job', required=True)
+    t.add_argument('--data', type=Path, default=Path('data'))
+    u = sub.add_parser('resume', help='continue original fake planning or a confirmed commit')
+    u.add_argument('--job', required=True)
+    u.add_argument('--data', type=Path, default=Path('data'))
+    u.add_argument('--fixture', type=Path, help='original fake fixture for interrupted planning')
+    u.add_argument('--context', choices=['offline', 'muninn-observe'], default='offline')
+    u.add_argument('--expected-config-hash')
+    u.add_argument('--repair-operation')
+    u.add_argument('--engram-id')
+    u.add_argument('--actor')
+    u.add_argument('--rationale')
+    backend_options(u)
     args = parser.parse_args()
     try:
         if args.command == 'scan':
             result = scan(args.source, args.data, args.max_bytes)
-        else:
+        elif args.command == 'plan':
             from .llm import FakeLLM
             from .planner import plan
-            result = plan(args.collection, args.data, FakeLLM(args.fixture),
-                          vault=args.vault, digest_budget=args.digest_bytes)
+            context = None
+            if args.context == 'muninn-observe':
+                from .context import ObserveContextProvider
+                from .muninn import MuninnAdapter
+                context = ObserveContextProvider(MuninnAdapter(args.muninn_url, args.vault,
+                    os.environ.get(args.observe_token_env)))
+            result = plan(args.collection, args.data, FakeLLM(args.fixture), vault=args.vault,
+                          digest_budget=args.digest_bytes, context_provider=context)
             if args.output:
                 if contains_symlink(args.output):
                     raise ValueError('output path must not contain symlinks')
                 args.output.parent.mkdir(parents=True, exist_ok=True)
                 args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+        else:
+            from .commit import commit, resume_job, review, status
+            from .contracts import parse_json
+            from .storage import connect
+            if args.command == 'review':
+                decisions = None
+                if args.decisions:
+                    if contains_symlink(args.decisions):
+                        raise ValueError('invalid_review_file')
+                    decisions = parse_json(args.decisions.read_text(encoding='utf-8'))
+                result = review(args.data, args.change_set, decisions, args.actor)
+            elif args.command == 'status':
+                result = status(args.data, args.job)
+            elif args.command == 'commit':
+                # Refuse before creating a session, local projection, or backend.
+                confirmed = args.yes
+                if not confirmed and sys.stdin.isatty():
+                    print('Publish approved operations? Type yes to confirm: ', file=sys.stderr, end='', flush=True)
+                    confirmed = input().strip() == 'yes'
+                if not confirmed:
+                    raise ValueError('explicit_commit_confirmation_required')
+                from .publication import load_change_set
+                with connect(args.data) as db:
+                    _, job, _ = load_change_set(db, args.change_set)
+                    vault = job['vault_id']
+                result = commit(args.data, args.change_set, configured_backend(args, vault),
+                    confirmed=True, actor=args.actor, expected_config_hash=args.expected_config_hash)
+            else:
+                with connect(args.data) as db:
+                    job = db.execute('SELECT vault_id FROM jobs WHERE id=?', (args.job,)).fetchone()
+                    if job is None:
+                        raise ValueError('unknown_job')
+                    is_commit = db.execute('SELECT 1 FROM commit_sessions s JOIN change_sets c ON c.id=s.change_set_id WHERE c.job_id=?', (args.job,)).fetchone()
+                repair = None
+                if any((args.repair_operation, args.engram_id, args.rationale)):
+                    if not all((args.repair_operation, args.engram_id, args.actor, args.rationale)):
+                        raise ValueError('manual_repair_requires_operation_id_engram_id_actor_rationale')
+                    repair = {'operation_id': args.repair_operation, 'engram_id': args.engram_id,
+                              'actor': args.actor, 'rationale': args.rationale}
+                from .llm import FakeLLM
+                context = None
+                if not is_commit and args.context == 'muninn-observe':
+                    from .context import ObserveContextProvider
+                    from .muninn import MuninnAdapter
+                    context = ObserveContextProvider(MuninnAdapter(args.muninn_url, job['vault_id'],
+                        os.environ.get(args.observe_token_env)))
+                result = resume_job(args.data, args.job,
+                    adapter=configured_backend(args, job['vault_id']) if is_commit else None,
+                    provider=FakeLLM(args.fixture) if args.fixture else None,
+                    context_provider=context,
+                    expected_config_hash=args.expected_config_hash, repair=repair)
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
-        if result.get('status') == 'needs_attention':
+        if result.get('status') in {'needs_attention', 'needs_manual_repair', 'blocked_backend', 'replan_required', 'stale_source'}:
             return 1
     except (OSError, ValueError, sqlite3.Error) as exc:
+        # Application exceptions use fixed codes; no raw backend body is exposed.
         print(json.dumps({'error': str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 1
     return 0
+
 
 if __name__ == '__main__':
     sys.exit(main())

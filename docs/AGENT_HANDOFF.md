@@ -1,4 +1,50 @@
-# Knowledge Ingestion V1 — этап 3: pinned MuninnDB capability spike
+# Knowledge Ingestion V1 — этап 4: review, publication и recovery
+
+Проверено **2026-11-10**, live product run **20:38 UTC / 23:38 Europe/Moscow**. Репозиторий `/workspace/smart-notes`, ветка **`codex/prototype-stages`**.
+Входной SHA этапа 4: **`c0a96f5f1e0a3787255c6dd9df89ae0a93480e1e`** (`HEAD=origin/codex/prototype-stages`, этап 3 reviewed/committed/pushed; дерево на входе чистое). Этап 2: `8daf7afc1a392495add5da19a8a0349fd78c026e`; base main `c0f2acde75041271b812280d62edd46fbc254a02`.
+Исполнитель этапа 4 **не выполнял commit/push**. Итоговый SHA после review фиксирует supervisor. Пользовательские stores, существующие backend и `/workspace/work/pre-sync-smart-notes` не изменялись.
+
+## Что завершено в этапе 4
+
+- `publication.py`: immutable original ChangeSet и supplied-file equality/hash/version, согласованность persisted job/config/manifest/staging/evidence/operations, current code versions, исходная ledger revision и operation preconditions. Проверка originals + snapshots и полного source manifest перед writes; отсутствующие/изменённые/hidden/unlisted source fail closed. Существующее stage1 кодирование stable IDs сохранено: для job identity восстанавливается исходный порядок manifest keys, operation payload сравнивается с независимым job_operations.
+- `commit.py`: `review` по operation_id с actor/rationale/UTC timestamp/append-only history, quotes/filename/heading; batch dependency validation и запрет approval unsafe defer/conflicts. Review decisions не изменяют исходный JSON и замораживаются после старта commit. `status` показывает decisions, все unapplied IDs, outbox attempts/outcome/known IDs, manual-repair IDs, confirmation/session и bounded redacted event timeline.
+- Подтверждаемый `commit`: `--yes` или literal terminal `yes`, обязательный actor; noninteractive отказ до подготовки/backend. `resume` продолжает оригинальный fake planning с совпадающим fixture/config/context либо ранее подтверждённый commit; повторное подтверждение для recovery не требуется. Manual known-ID repair требует operation ID, actor/rationale и точного read-back.
+- Единственный writer под vault `flock` для одного OS account (Linux). Schema3 additive transactional 2→3 migration добавляет review_decisions/commit_sessions/outbox, сохраняя прежние таблицы/данные/IDs. Commit session фиксирует backend identity, config/artifact hashes, confirmation и ожидаемую ledger revision, атомарно обновляемую после собственного local apply; внешние изменения дают `replan_required`.
+- Transactional outbox `prepared` до POST, durable `attempting` до вызова, stable `ki_op:<operation_id>`, attempts/outcome/known-ID/read-back, atomic/idempotent local apply. После crash/unknown сначала exact reconciliation. Real pinned capability false → `needs_manual_repair`, **без повторного POST**. Known-ID GET проверяет vault, ID, concept/content, полный tag set/marker и confidence. Новая session блокируется, пока в vault есть unresolved attempted outbox, чтобы новый plan не обходил unknown outcome свежим marker.
+- `muninn.py`: pinned v0.9.0 health и capability contract, раздельные observe/full bearer credentials, consistent vault, no admin cookies/redirect forwarding, no token/body exception logging, GET, bounded observe ACTIVATE, единственный create endpoint. General `list_by_marker` explicit `UnsupportedOperation`; native entity capability optional/local fallback. HTTP truncation/transport/3xx/408/5xx после POST считаются unknown; definitive4xx terminal refusal; никакой автоматический POST retry.
+- `fake_backend.py`: **явно fake** durable SQLite backend для offline workflow/recovery, с отдельным именем/identity и проверкой формата store. Его exhaustive marker guarantee не приписывается MuninnDB. No automatic fake fallback для live failures.
+- Readable engrams сохраняют negative polarity в самом утверждении, valid time, typed object/unit и qualifiers; имена берутся из committed+staged ledger. Native names не являются IDs. Alias/evidence reinforcement меняет только локальный ledger, никакого merge/delete/evolve/update прошлых engrams.
+- Opt-in `plan --context muninn-observe`: bounded observe GET/ACTIVATE, explicit local-ledger fallback, external snippets как untrusted context; default fake plan остаётся полностью offline. Observe/full secrets не попадают в prompts/config/artifacts/status. Не заявляется полная legacy semantic reconciliation или cognitive immutability.
+- `scripts/smoke_commit.py` использует isolation harness stage3 с отдельным characterization callback; создаёт только собственный temporary loopback instance, synthetic sources и random transient keys. Ни existing URL, ни existing data-directory параметра нет. Fault injection после реального POST/до SQLite, lost response и read-back failure явно обозначены в отчёте. README обновлён для реализованного CLI; NEXT_TASKS §4 закрыт с ограничениями, §5 остаётся открытым.
+
+## Проверки и результаты этапа 4
+
+```sh
+python -m unittest discover -s tests -v
+python -m compileall -q knowledge_ingestion scripts tests
+git diff --check
+python scripts/smoke_commit.py --binary work/muninn-spike/muninn-linux-amd64 \
+  --output work/commit-smoke/report.json
+```
+
+- **78/78 offline tests PASS**: 47 прежних + 31 adapter/publication/recovery. Нет внешней сети/LLM; fake workflow tests запрещают sockets/source subprocess. Полный CLI scan→fake plan→review→commit→status→resume, repeat/reimport, local aliases/reinforcement и synthetic corpus с deferred/conflicts проходят.
+- Проверены review history/dependency rejection/unsafe override refusal, noninteractive confirmation, prepared-before-POST, crash после успешного POST до ID/SQLite, supported fake exact recovery и unsupported fallback, lost response, terminal4xx, known-ID persistence/read-back failure/mismatch, manual verified ID, stale original/snapshot/config/ledger/backend, outbox/artifact tamper, same-account concurrent process, replan обход unknown и lossless schema2→3 migration. Unapplied/deferred записи доступны через status, старые source revisions/evidence сохраняются.
+- **Product live smoke: `PASS_with_documented_limitations`**, установленный Linux x86-64 binary v0.9.0 с checksum `4da4c959a6482c7608809a75501cd3c746875c1dcd9c7caf7e6d3052dbdefa5b`. Primary product adapter: **5 full POST**, **38 observe reads**; отдельный observe-context adapter: **4 reads/0 writes**; invalid-full fixture: **1 rejected POST (401)**. Ledger: **5 committed claims, 5 applied outbox**, 1 terminal-refusal manual-repair outbox. Повтор/reimport создаёт всего 1 engram; все resume/manual recovery дают **0 extra POST**. Daemon stopped и temporary storage removed подтверждены отчётом.
+- **Independent supervisor live replay: PASS** по всем этим сценариям; финальный independent supervisor offline replay также 78/78 PASS, compileall и diff-check PASS. Local reports/work assets ignored и не входят в Git. Compileall и diff-check PASS.
+
+## Реальные ограничения и следующие задачи — этап 5
+
+1. **Real exhaustive marker lookup UNSUPPORTED** по фактам stage3. Не использовать active-only search, capped deleted list, native content dedup или непроверенные idempotent_id/op_id receipts как доказательство отсутствия. Lost ID автоматически не обнаруживается; unknown POST сохраняется manual. Reliable known-ID может завершить application только после точного read-back.
+2. Known4xx — terminal/manual, без повторного POST. CLI abandonment/refusal resolution пока отсутствует; unresolved attempted outbox блокирует новые sessions vault. История/исходные данные сохраняются для ручного разбора. Source/config changes во время partial publication также требуют operator-led reconciliation; простое редактирование artifact/outbox запрещено integrity checks.
+3. Надёжная идемпотентность требует **одного authoritative ledger на backend/vault**. Lock действует в одном OS account/host, Linux/flock; cross-host/cross-account/cross-ledger coordination и Windows publication не реализованы. Source/snapshot должны оставаться неизменными в течение preflight/commit; защиты от враждебных concurrent filesystem writers нет.
+4. **Inherited scanner defects не исправлены:** `.git`/other hidden dirs обходятся; all-invalid scan возвращает empty-success; удалённый документ остаётся last_revision и planner включает его после rescan. Precommit отвергает missing/hidden/unlisted material; all-invalid planning не имеет пригодных документов. Directory collections с skipped eligible files также отклоняются консервативным полным manifest check. Этап 5 обязан исправить scanner, добавить регрессии и заново проверить **полный Gate B**. Не скрывать это за успешным offline baseline.
+5. Native optional candidate tools не подключены к product canonical matching; bounded REST context и explicit local fallback есть, полноценная semantic reconciliation внешних legacy snippets остаётся за границей прототипа. ContextBundle уже ограничивает entities≤64, aliases≤64, claims≤40 и digest budget, но большой единичный claim/evidence payload требует дальнейшей оценки prompt budgets на real provider.
+6. Observe exposed counters stage3 были 0→0, hidden scoring feedback не измерен. **Не обещать полную cognitive immutability.** В product smoke callbacks фиксируют искусственные service-boundary faults после настоящего HTTP success; это не simulated Muninn storage crash или distributed durability proof.
+7. Этап 5: configurable real LLM, data-disclosure/secret discipline, полный README/install/demo/ARCHITECTURE/KNOWN_LIMITATIONS/report, все §12 scenarios и честные §13–14 quality gates. Никакой real LLM/финальный qualityreport в этапе 4 не выполнялся. **V1 в целом не готов.**
+
+---
+
+## Исторический handoff этапа 3: pinned MuninnDB capability spike
 
 Дата проверки: **2026-11-10**. Репозиторий `/workspace/smart-notes`, ветка **`codex/prototype-stages`**.
 Входной SHA этапа 3: **`8daf7afc1a392495add5da19a8a0349fd78c026e`** (`HEAD=origin/codex/prototype-stages`, этап 2 reviewed/committed/pushed; дерево на входе чистое).
