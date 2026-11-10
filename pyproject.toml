@@ -10,3 +10,6 @@ dependencies = []
 
 [project.scripts]
 ki = "knowledge_ingestion.cli:main"
+
+[tool.setuptools]
+packages = ["knowledge_ingestion"]
