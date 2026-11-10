@@ -4,7 +4,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from knowledge_ingestion.cli import scan
+from knowledge_ingestion.cli import scan, stable_id
+from knowledge_ingestion.storage import migrate
 
 
 class ScanTest(unittest.TestCase):
@@ -66,7 +67,7 @@ class ScanTest(unittest.TestCase):
         p = self.root / 'new.md'; p.write_text('new')
         scan(p, self.data); scan(p, self.data)
         with sqlite3.connect(self.data / 'ledger.sqlite3') as db:
-            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], 1)
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], 2)
             self.assertEqual(db.execute('SELECT * FROM revisions').fetchall(), [('old', 'old.md', 'hash', 'old-snapshot')])
             self.assertEqual(db.execute('SELECT COUNT(*) FROM source_revisions').fetchone()[0], 1)
 
@@ -80,6 +81,48 @@ class ScanTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             scan([outside, outside / 'a.md'], self.data)
         self.assertEqual(scan(outside / 'missing.md', self.data)['warnings'][0]['reason'], 'not_found')
+
+    def test_stage1_schema_migration_preserves_every_row_and_snapshot(self):
+        # Construct the actual four-table schema at stage1, not a schema2 store.
+        self.data.mkdir()
+        snapshot = self.data / 'snapshot-stage1'
+        raw = '\ufeff# Старое 🐈\nИсходные байты.'.encode()
+        snapshot.write_bytes(raw)
+        with sqlite3.connect(self.data / 'ledger.sqlite3') as db:
+            for statement in (
+                'CREATE TABLE collections (id TEXT PRIMARY KEY,kind TEXT NOT NULL,sources_json TEXT NOT NULL)',
+                'CREATE TABLE documents (id TEXT PRIMARY KEY,collection_id TEXT NOT NULL REFERENCES collections(id),locator TEXT NOT NULL,last_revision_id TEXT,UNIQUE(collection_id,locator))',
+                'CREATE TABLE source_revisions (id TEXT PRIMARY KEY,document_id TEXT NOT NULL REFERENCES documents(id),sha256 TEXT NOT NULL,snapshot TEXT NOT NULL,parser_version TEXT NOT NULL,UNIQUE(document_id,sha256))',
+                'CREATE TABLE chunks (id TEXT PRIMARY KEY,revision_id TEXT NOT NULL REFERENCES source_revisions(id),ordinal INTEGER NOT NULL,start_byte INTEGER NOT NULL,end_byte INTEGER NOT NULL,heading_path TEXT NOT NULL,overlap_start INTEGER,overlap_end INTEGER,UNIQUE(revision_id,ordinal))',
+            ):
+                db.execute(statement)
+            db.execute('INSERT INTO collections VALUES (?,?,?)', ('old-col', 'files', '["file:///old.md"]'))
+            db.execute('INSERT INTO documents VALUES (?,?,?,?)', ('old-doc', 'old-col', 'file:///old.md', 'old-rev'))
+            db.execute('INSERT INTO source_revisions VALUES (?,?,?,?,?)', ('old-rev', 'old-doc', 'preserved-hash', str(snapshot), '1'))
+            db.execute('INSERT INTO chunks VALUES (?,?,?,?,?,?,?,?)', ('old-chunk', 'old-rev', 0, 0, len(raw), '["Старое 🐈"]', None, None))
+            db.execute('PRAGMA user_version=1')
+            before = {table: db.execute(f'SELECT * FROM {table}').fetchall() for table in ('collections','documents','source_revisions','chunks')}
+        with sqlite3.connect(self.data / 'ledger.sqlite3') as db:
+            db.execute('PRAGMA foreign_keys=ON')
+            migrate(db)
+            migrate(db)
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], 2)
+            for table, rows in before.items():
+                self.assertEqual(db.execute(f'SELECT * FROM {table}').fetchall(), rows)
+            self.assertEqual(db.execute('PRAGMA foreign_key_check').fetchall(), [])
+            self.assertEqual(db.execute('SELECT * FROM revision_metadata').fetchall(), [('old-rev', None)])
+        self.assertEqual(snapshot.read_bytes(), raw)
+        # The old identity encoding remains byte-for-byte compatible.
+        import hashlib
+        payload = json.dumps(('directory', ['file:///old']), ensure_ascii=False, separators=(',', ':')).encode()
+        self.assertEqual(stable_id('col', 'directory', ['file:///old']), 'col_' + hashlib.sha256(payload).hexdigest())
+
+    def test_newer_schema_is_rejected_without_downgrade(self):
+        with sqlite3.connect(':memory:') as db:
+            db.execute('PRAGMA user_version=99')
+            with self.assertRaisesRegex(ValueError, 'newer'):
+                migrate(db)
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], 99)
 
     def test_corpus(self):
         corpus = Path(__file__).resolve().parents[1] / 'fixtures' / 'obsidian'

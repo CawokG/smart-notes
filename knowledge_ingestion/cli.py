@@ -8,40 +8,12 @@ import sqlite3
 import sys
 from pathlib import Path
 
-PARSER_VERSION = '1'
-SCHEMA_VERSION = 1
+from .contracts import PARSER_VERSION, SCHEMA_VERSION, stable_id
+from .storage import contains_symlink, migrate, now
+
 MAX_BYTES = 5 * 1024 * 1024
 CHUNK_BYTES = 9000  # Approximate token budget; UTF-8 bytes are not tokens.
 OVERLAP_BYTES = 700
-
-
-def stable_id(prefix, *parts):
-    payload = json.dumps(parts, ensure_ascii=False, separators=(',', ':')).encode()
-    return prefix + '_' + hashlib.sha256(payload).hexdigest()
-
-
-def migrate(db):
-    version = db.execute('PRAGMA user_version').fetchone()[0]
-    if version > SCHEMA_VERSION:
-        raise ValueError('ledger schema is newer than this scanner')
-    if version == 0:
-        # The original revisions table is intentionally left untouched, including
-        # its paths and snapshots. New data uses distinct, versioned tables.
-        with db:
-            for statement in (
-                'CREATE TABLE IF NOT EXISTS collections (id TEXT PRIMARY KEY, kind TEXT NOT NULL, sources_json TEXT NOT NULL)',
-                'CREATE TABLE IF NOT EXISTS documents (id TEXT PRIMARY KEY, collection_id TEXT NOT NULL REFERENCES collections(id), locator TEXT NOT NULL, last_revision_id TEXT, UNIQUE(collection_id, locator))',
-                'CREATE TABLE IF NOT EXISTS source_revisions (id TEXT PRIMARY KEY, document_id TEXT NOT NULL REFERENCES documents(id), sha256 TEXT NOT NULL, snapshot TEXT NOT NULL, parser_version TEXT NOT NULL, UNIQUE(document_id, sha256))',
-                'CREATE TABLE IF NOT EXISTS chunks (id TEXT PRIMARY KEY, revision_id TEXT NOT NULL REFERENCES source_revisions(id), ordinal INTEGER NOT NULL, start_byte INTEGER NOT NULL, end_byte INTEGER NOT NULL, heading_path TEXT NOT NULL, overlap_start INTEGER, overlap_end INTEGER, UNIQUE(revision_id, ordinal))',
-            ):
-                db.execute(statement)
-            db.execute('PRAGMA user_version=1')
-
-
-def contains_symlink(path):
-    """Check every existing component before canonicalization, including parents."""
-    path = Path(os.path.abspath(path))
-    return any(part.is_symlink() for part in (path, *path.parents))
 
 
 def chunks_for(raw, revision_id):
@@ -197,7 +169,9 @@ def scan(source, data: Path, limit: int = MAX_BYTES) -> dict:
                 rev_id = stable_id('rev', doc_id, digest)
                 chunks = chunks_for(raw, rev_id)
                 db.execute('INSERT OR IGNORE INTO documents VALUES (?,?,?,NULL)', (doc_id, collection_id, locator))
-                db.execute('INSERT OR IGNORE INTO source_revisions VALUES (?,?,?,?,?)', (rev_id, doc_id, digest, str(snap), PARSER_VERSION))
+                inserted = db.execute('INSERT OR IGNORE INTO source_revisions VALUES (?,?,?,?,?)', (rev_id, doc_id, digest, str(snap), PARSER_VERSION)).rowcount
+                if inserted:
+                    db.execute('INSERT INTO revision_metadata VALUES (?,?)', (rev_id, now()))
                 db.execute('UPDATE documents SET last_revision_id=? WHERE id=?', (rev_id, doc_id))
                 for c in chunks:
                     overlap = c['overlap_range'] or [None, None]
@@ -213,9 +187,31 @@ def main():
     s.add_argument('source', type=Path, nargs='+')
     s.add_argument('--data', type=Path, default=Path('data'))
     s.add_argument('--max-bytes', type=int, default=MAX_BYTES)
+    p = sub.add_parser('plan', help='build an offline ChangeSet; never publish')
+    p.add_argument('--collection', required=True)
+    p.add_argument('--data', type=Path, default=Path('data'))
+    p.add_argument('--vault', default='personal')
+    p.add_argument('--llm-provider', choices=['fake'], default='fake')
+    p.add_argument('--fixture', type=Path, required=True)
+    p.add_argument('--digest-bytes', type=int, default=4096)
+    p.add_argument('--output', type=Path)
     args = parser.parse_args()
     try:
-        print(json.dumps(scan(args.source, args.data, args.max_bytes), ensure_ascii=False, indent=2))
+        if args.command == 'scan':
+            result = scan(args.source, args.data, args.max_bytes)
+        else:
+            from .llm import FakeLLM
+            from .planner import plan
+            result = plan(args.collection, args.data, FakeLLM(args.fixture),
+                          vault=args.vault, digest_budget=args.digest_bytes)
+            if args.output:
+                if contains_symlink(args.output):
+                    raise ValueError('output path must not contain symlinks')
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+        if result.get('status') == 'needs_attention':
+            return 1
     except (OSError, ValueError, sqlite3.Error) as exc:
         print(json.dumps({'error': str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 1

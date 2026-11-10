@@ -1,0 +1,509 @@
+{
+  "version": "1.0",
+  "responses": [
+    {
+      "document_path": "People/Alexey.md",
+      "chunk_ordinal": 0,
+      "proposal": {
+        "version": "1.0",
+        "entity_mentions": [
+          {
+            "ref": "alex_designer",
+            "surface": "Алексей",
+            "canonical_name": "Алексей",
+            "type": "person",
+            "scope": "local",
+            "anchor": {
+              "quote": "Алексей — дизайнер.",
+              "chunk_ordinal": 0,
+              "occurrence_index": null,
+              "origin": "body",
+              "source_role": "direct"
+            },
+            "identity_hint": null,
+            "distinct": false
+          }
+        ],
+        "aliases": [
+          {
+            "entity_ref": "alex_designer",
+            "value": "Лёша",
+            "kind": "nickname",
+            "scope": "local",
+            "anchor": {
+              "quote": "Алексей, также известный как Лёша, использует ник @alex_design в GitHub.",
+              "chunk_ordinal": 0,
+              "occurrence_index": null,
+              "origin": "body",
+              "source_role": "direct"
+            }
+          },
+          {
+            "entity_ref": "alex_designer",
+            "value": "@alex_design",
+            "kind": "handle",
+            "scope": "service:github",
+            "anchor": {
+              "quote": "Алексей, также известный как Лёша, использует ник @alex_design в GitHub.",
+              "chunk_ordinal": 0,
+              "occurrence_index": null,
+              "origin": "body",
+              "source_role": "direct"
+            }
+          }
+        ],
+        "claim_proposals": [],
+        "document_context_digest": "Scripted fixture only."
+      }
+    },
+    {
+      "document_path": "People/Max.md",
+      "chunk_ordinal": 1,
+      "proposal": {
+        "version": "1.0",
+        "entity_mentions": [
+          {
+            "ref": "max",
+            "surface": "Максим",
+            "canonical_name": "Максим",
+            "type": "person",
+            "scope": "local",
+            "anchor": {
+              "quote": "Максим — разработчик.",
+              "chunk_ordinal": 1,
+              "occurrence_index": null,
+              "origin": "body",
+              "source_role": "direct"
+            },
+            "identity_hint": null,
+            "distinct": false
+          },
+          {
+            "ref": "atlas",
+            "surface": "Atlas",
+            "canonical_name": "Atlas",
+            "type": "project",
+            "scope": "local",
+            "anchor": {
+              "quote": "Atlas — проект импорта знаний.",
+              "chunk_ordinal": 1,
+              "occurrence_index": null,
+              "origin": "body",
+              "source_role": "direct"
+            },
+            "identity_hint": null,
+            "distinct": false
+          },
+          {
+            "ref": "unknown_alex",
+            "surface": "Алексей",
+            "canonical_name": "Алексей",
+            "type": "person",
+            "scope": "local",
+            "anchor": {
+              "quote": "Возможно, Максим знаком с человеком по имени Алексей.",
+              "chunk_ordinal": 1,
+              "occurrence_index": null,
+              "origin": "body",
+              "source_role": "direct"
+            },
+            "identity_hint": null,
+            "distinct": false
+          }
+        ],
+        "aliases": [
+          {
+            "entity_ref": "max",
+            "value": "Макс",
+            "kind": "nickname",
+            "scope": "local",
+            "anchor": {
+              "quote": "Максим, также известный как Макс, использует ник @max_dev в GitHub.",
+              "chunk_ordinal": 1,
+              "occurrence_index": null,
+              "origin": "body",
+              "source_role": "direct"
+            }
+          },
+          {
+            "entity_ref": "max",
+            "value": "@max_dev",
+            "kind": "handle",
+            "scope": "service:github",
+            "anchor": {
+              "quote": "Максим, также известный как Макс, использует ник @max_dev в GitHub.",
+              "chunk_ordinal": 1,
+              "occurrence_index": null,
+              "origin": "body",
+              "source_role": "direct"
+            }
+          }
+        ],
+        "claim_proposals": [
+          {
+            "ref": "works",
+            "subject_ref": "max",
+            "predicate": "works_on",
+            "object": {
+              "kind": "entity",
+              "ref": "atlas"
+            },
+            "qualifiers": {},
+            "polarity": "positive",
+            "modality": "asserted",
+            "valid_time": {
+              "from": null,
+              "to": null,
+              "precision": "unknown",
+              "temporal_expression": null
+            },
+            "reported_by_ref": null,
+            "anchors": [
+              {
+                "quote": "Максим работает над Atlas.",
+                "chunk_ordinal": 1,
+                "occurrence_index": null,
+                "origin": "body",
+                "source_role": "direct"
+              }
+            ],
+            "confidence_raw": 0.99
+          },
+          {
+            "ref": "uncertain",
+            "subject_ref": "max",
+            "predicate": "knows",
+            "object": {
+              "kind": "entity",
+              "ref": "unknown_alex"
+            },
+            "qualifiers": {},
+            "polarity": "positive",
+            "modality": "hypothetical",
+            "valid_time": {
+              "from": null,
+              "to": null,
+              "precision": "unknown",
+              "temporal_expression": null
+            },
+            "reported_by_ref": null,
+            "anchors": [
+              {
+                "quote": "Возможно, Максим знаком с человеком по имени Алексей.",
+                "chunk_ordinal": 1,
+                "occurrence_index": null,
+                "origin": "body",
+                "source_role": "direct"
+              }
+            ],
+            "confidence_raw": 0.99
+          },
+          {
+            "ref": "planned",
+            "subject_ref": "max",
+            "predicate": "uses",
+            "object": {
+              "kind": "literal",
+              "value": "SQLite"
+            },
+            "qualifiers": {},
+            "polarity": "positive",
+            "modality": "planned",
+            "valid_time": {
+              "from": null,
+              "to": null,
+              "precision": "unknown",
+              "temporal_expression": null
+            },
+            "reported_by_ref": null,
+            "anchors": [
+              {
+                "quote": "Максим планирует использовать SQLite.",
+                "chunk_ordinal": 1,
+                "occurrence_index": null,
+                "origin": "body",
+                "source_role": "direct"
+              }
+            ],
+            "confidence_raw": 0.99
+          },
+          {
+            "ref": "reported",
+            "subject_ref": "max",
+            "predicate": "uses",
+            "object": {
+              "kind": "literal",
+              "value": "Python"
+            },
+            "qualifiers": {},
+            "polarity": "positive",
+            "modality": "reported",
+            "valid_time": {
+              "from": null,
+              "to": null,
+              "precision": "unknown",
+              "temporal_expression": null
+            },
+            "reported_by_ref": null,
+            "anchors": [
+              {
+                "quote": "Говорят, Максим использует Python.",
+                "chunk_ordinal": 1,
+                "occurrence_index": null,
+                "origin": "body",
+                "source_role": "reported"
+              }
+            ],
+            "confidence_raw": 0.99
+          },
+          {
+            "ref": "question",
+            "subject_ref": "max",
+            "predicate": "works_on",
+            "object": {
+              "kind": "entity",
+              "ref": "atlas"
+            },
+            "qualifiers": {},
+            "polarity": "positive",
+            "modality": "question",
+            "valid_time": {
+              "from": null,
+              "to": null,
+              "precision": "unknown",
+              "temporal_expression": null
+            },
+            "reported_by_ref": null,
+            "anchors": [
+              {
+                "quote": "Работает ли Максим над Atlas?",
+                "chunk_ordinal": 1,
+                "occurrence_index": null,
+                "origin": "body",
+                "source_role": "direct"
+              }
+            ],
+            "confidence_raw": 0.99
+          },
+          {
+            "ref": "past",
+            "subject_ref": "max",
+            "predicate": "works_on",
+            "object": {
+              "kind": "entity",
+              "ref": "atlas"
+            },
+            "qualifiers": {},
+            "polarity": "positive",
+            "modality": "asserted",
+            "valid_time": {
+              "from": "2024",
+              "to": "2024",
+              "precision": "year",
+              "temporal_expression": null
+            },
+            "reported_by_ref": null,
+            "anchors": [
+              {
+                "quote": "В 2024 году Максим работал над Atlas.",
+                "chunk_ordinal": 1,
+                "occurrence_index": null,
+                "origin": "body",
+                "source_role": "direct"
+              }
+            ],
+            "confidence_raw": 0.99
+          },
+          {
+            "ref": "negative_now",
+            "subject_ref": "max",
+            "predicate": "works_on",
+            "object": {
+              "kind": "entity",
+              "ref": "atlas"
+            },
+            "qualifiers": {},
+            "polarity": "negative",
+            "modality": "asserted",
+            "valid_time": {
+              "from": null,
+              "to": null,
+              "precision": "unresolved",
+              "temporal_expression": "Сейчас"
+            },
+            "reported_by_ref": null,
+            "anchors": [
+              {
+                "quote": "Сейчас Максим не работает над Atlas.",
+                "chunk_ordinal": 1,
+                "occurrence_index": null,
+                "origin": "body",
+                "source_role": "direct"
+              }
+            ],
+            "confidence_raw": 0.99
+          }
+        ],
+        "document_context_digest": "Scripted fixture only."
+      }
+    },
+    {
+      "document_path": "Projects/Atlas.md",
+      "chunk_ordinal": 0,
+      "proposal": {
+        "version": "1.0",
+        "entity_mentions": [
+          {
+            "ref": "alex_manager",
+            "surface": "Алексей",
+            "canonical_name": "Алексей",
+            "type": "person",
+            "scope": "local",
+            "anchor": {
+              "quote": "Алексей — другой человек, руководитель проекта.",
+              "chunk_ordinal": 0,
+              "occurrence_index": null,
+              "origin": "body",
+              "source_role": "direct"
+            },
+            "identity_hint": null,
+            "distinct": true
+          },
+          {
+            "ref": "atlas",
+            "surface": "Atlas",
+            "canonical_name": "Atlas",
+            "type": "project",
+            "scope": "local",
+            "anchor": {
+              "quote": "Atlas — проект импорта знаний.",
+              "chunk_ordinal": 0,
+              "occurrence_index": null,
+              "origin": "body",
+              "source_role": "direct"
+            },
+            "identity_hint": null,
+            "distinct": false
+          },
+          {
+            "ref": "max",
+            "surface": "Максим",
+            "canonical_name": "Максим",
+            "type": "person",
+            "scope": "local",
+            "anchor": {
+              "quote": "Максим использует ник @max_dev в GitHub.",
+              "chunk_ordinal": 0,
+              "occurrence_index": null,
+              "origin": "body",
+              "source_role": "direct"
+            },
+            "identity_hint": {
+              "value": "@max_dev",
+              "scope": "service:github",
+              "anchor": {
+                "quote": "Максим использует ник @max_dev в GitHub.",
+                "chunk_ordinal": 0,
+                "occurrence_index": null,
+                "origin": "body",
+                "source_role": "direct"
+              }
+            },
+            "distinct": false
+          }
+        ],
+        "aliases": [],
+        "claim_proposals": [
+          {
+            "ref": "works_again",
+            "subject_ref": "max",
+            "predicate": "working_on",
+            "object": {
+              "kind": "entity",
+              "ref": "atlas"
+            },
+            "qualifiers": {},
+            "polarity": "positive",
+            "modality": "asserted",
+            "valid_time": {
+              "from": null,
+              "to": null,
+              "precision": "unknown",
+              "temporal_expression": null
+            },
+            "reported_by_ref": null,
+            "anchors": [
+              {
+                "quote": "Максим работает над Atlas.",
+                "chunk_ordinal": 0,
+                "occurrence_index": null,
+                "origin": "body",
+                "source_role": "direct"
+              }
+            ],
+            "confidence_raw": 0.99
+          },
+          {
+            "ref": "status_active",
+            "subject_ref": "atlas",
+            "predicate": "has_status",
+            "object": {
+              "kind": "literal",
+              "value": "active"
+            },
+            "qualifiers": {},
+            "polarity": "positive",
+            "modality": "asserted",
+            "valid_time": {
+              "from": "2026-11-10",
+              "to": "2026-11-10",
+              "precision": "day",
+              "temporal_expression": null
+            },
+            "reported_by_ref": null,
+            "anchors": [
+              {
+                "quote": "На 2026-11-10 Atlas имеет статус active.",
+                "chunk_ordinal": 0,
+                "occurrence_index": null,
+                "origin": "body",
+                "source_role": "direct"
+              }
+            ],
+            "confidence_raw": 0.99
+          },
+          {
+            "ref": "status_paused",
+            "subject_ref": "atlas",
+            "predicate": "has_status",
+            "object": {
+              "kind": "literal",
+              "value": "paused"
+            },
+            "qualifiers": {},
+            "polarity": "positive",
+            "modality": "asserted",
+            "valid_time": {
+              "from": "2026-11-10",
+              "to": "2026-11-10",
+              "precision": "day",
+              "temporal_expression": null
+            },
+            "reported_by_ref": null,
+            "anchors": [
+              {
+                "quote": "На 2026-11-10 Atlas имеет статус paused.",
+                "chunk_ordinal": 0,
+                "occurrence_index": null,
+                "origin": "body",
+                "source_role": "direct"
+              }
+            ],
+            "confidence_raw": 0.99
+          }
+        ],
+        "document_context_digest": "Scripted fixture only."
+      }
+    }
+  ]
+}

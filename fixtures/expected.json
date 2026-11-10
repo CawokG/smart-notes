@@ -1,6 +1,48 @@
 {
-  "description": "Синтетический корпус для проверки scan; утверждения и идентичности на этом этапе не извлекаются.",
-  "paths": ["People/Alexey.md", "People/Max.md", "Projects/Atlas.md", "injection.md", "long.md"],
-  "unresolved_examples": ["двое людей по имени Алексей", "Возможно, Максим знаком с Алексеем", "[[Missing]]"],
-  "raw_only": ["frontmatter aliases", "[[Projects/Atlas|Атлас]]", "инструкция удалить память"]
+  "description": "Синтетический scan и scripted FakeLLM offline plan; не оценка качества реального извлечения.",
+  "paths": [
+    "People/Alexey.md",
+    "People/Max.md",
+    "Projects/Atlas.md",
+    "injection.md",
+    "long.md"
+  ],
+  "unresolved_examples": [
+    "двое людей по имени Алексей",
+    "Возможно, Максим знаком с Алексеем",
+    "[[Missing]]"
+  ],
+  "raw_only": [
+    "frontmatter aliases",
+    "[[Projects/Atlas|Атлас]]",
+    "инструкция удалить память"
+  ],
+  "offline_plan": {
+    "fixture": "offline-extraction.json",
+    "operations": {
+      "add_alias": 4,
+      "add_evidence": 1,
+      "conflict_warning": 1,
+      "create_claim": 2,
+      "create_entity": 4,
+      "defer": 7,
+      "link_claim_entity": 4,
+      "skip_duplicate": 0
+    },
+    "current_works_on_claims": 1,
+    "current_works_on_evidence": 2,
+    "distinct_alexey_entities": 2,
+    "deferred_modalities": [
+      "hypothetical",
+      "planned",
+      "question",
+      "reported"
+    ],
+    "conflicting_statuses": [
+      "active",
+      "paused"
+    ],
+    "backend_calls": 0,
+    "unconfigured_chunks": "empty scripted proposals; long-note recall is not measured"
+  }
 }
