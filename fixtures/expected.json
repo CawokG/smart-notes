@@ -1,0 +1,6 @@
+{
+  "description": "Синтетический корпус для проверки scan; утверждения и идентичности на этом этапе не извлекаются.",
+  "paths": ["People/Alexey.md", "People/Max.md", "Projects/Atlas.md", "injection.md", "long.md"],
+  "unresolved_examples": ["двое людей по имени Алексей", "Возможно, Максим знаком с Алексеем", "[[Missing]]"],
+  "raw_only": ["frontmatter aliases", "[[Projects/Atlas|Атлас]]", "инструкция удалить память"]
+}

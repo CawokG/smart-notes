@@ -2,11 +2,20 @@
 
 This is an incomplete implementation. It provides a local snapshot scan only; it does not extract claims or connect to MuninnDB.
 
-The current implementation accepts one UTF-8 `.txt` or `.md` file per scan. V1 targets importing multiple selected files or recursively importing a folder, including an Obsidian vault as ordinary text and Markdown files. Special handling of Obsidian links and typed fields is deferred beyond V1. Entity and relationship extraction is not implemented yet. See [SPEC.md](SPEC.md) and [the next tasks](docs/NEXT_TASKS.md).
+The scanner accepts one or more explicitly selected UTF-8 `.txt`/`.md` files, or one directory recursively. It stores exact snapshots and produces deterministic byte ranges for heading/paragraph chunks. `.obsidian`, the data directory and symbolic links are excluded; links and frontmatter remain uninterpreted source text. Extraction and MuninnDB integration are not implemented. See [SPEC.md](SPEC.md) and [the next tasks](docs/NEXT_TASKS.md).
 
-Python 3.12+: `python -m knowledge_ingestion.cli scan ./note.md --data ./data` prints a JSON scan report. Snapshots and a SQLite revision index are stored in the data directory. Run tests with `python -m unittest discover -s tests`.
+Python 3.12+ examples:
 
-Source content may contain private information; snapshots retain exact bytes.
+```sh
+python -m knowledge_ingestion.cli scan ./note.md --data ./data
+python -m knowledge_ingestion.cli scan ./one/a.md ./two/a.md --data ./data
+python -m knowledge_ingestion.cli scan ./vault --data ./data --max-bytes 5242880
+python -m unittest discover -s tests -v
+```
+
+The JSON report includes warnings, collection/document/revision IDs and chunk byte ranges. IDs use SHA-256 over version-independent JSON-encoded identity components: a directory collection uses its absolute file URI, a selected-files collection uses the sorted unique set of absolute file URIs; document identity uses the collection and relative path or file URI, and revision identity uses document ID and the SHA-256 of the source bytes. Editing a file creates a revision; moving it creates a new document identity. Content hashes alone do not merge documents. A BOM is retained in the snapshot and byte offsets; chunks use half-open byte ranges and decode as UTF-8. Chunk sizes and overlap are byte-based approximations, not tokenizer guarantees. Links are never followed as a result of their contents.
+
+SQLite `user_version=1` creates the scan tables transactionally; an existing unversioned `revisions` table and its snapshot files remain intact alongside the new tables. Existing legacy rows are retained as history, not automatically associated with new collections, because their original collection intent cannot be inferred. Rescan sources to index them in the new schema. A newer unsupported schema is rejected. Snapshots may contain private information and are stored unencrypted as exact bytes; avoid scanning a directory while it is being modified by an untrusted process.
 
 ## Install MuninnDB and the application
 
