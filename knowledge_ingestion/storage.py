@@ -28,6 +28,21 @@ def migrate(db):
         raise ValueError('ledger schema is newer than this application')
     if version == SCHEMA_VERSION:
         return
+    if version == 3:
+        with db:
+            db.execute('BEGIN IMMEDIATE')
+            db.execute('''CREATE TABLE collection_scans (
+                collection_id TEXT PRIMARY KEY REFERENCES collections(id),
+                policy_json TEXT NOT NULL, warnings_json TEXT NOT NULL)''')
+            db.execute('''CREATE TABLE scan_membership (
+                collection_id TEXT NOT NULL REFERENCES collections(id),
+                document_id TEXT NOT NULL REFERENCES documents(id),
+                revision_id TEXT NOT NULL REFERENCES source_revisions(id),
+                PRIMARY KEY(collection_id,document_id))''')
+            # Historical rows remain untouched. Rescan before planning/publication;
+            # an old last_revision_id cannot prove current source membership.
+            db.execute('PRAGMA user_version=4')
+        return
     if version == 2:
         with db:
             db.execute('BEGIN IMMEDIATE')
@@ -53,6 +68,7 @@ def migrate(db):
             ):
                 db.execute(statement)
             db.execute('PRAGMA user_version=3')
+        migrate(db)
         return
     with db:
         db.execute('BEGIN IMMEDIATE')

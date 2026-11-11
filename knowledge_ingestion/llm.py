@@ -1,7 +1,13 @@
 """Read-only structured provider protocol and an explicitly scripted fake."""
 import copy
+import http.client
+import os
+import re
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Protocol
+from urllib.parse import urlsplit
 
 from .contracts import (EXTRACTION_SCHEMA, PROMPT_VERSION, VERSION, ValidationError,
                         canonical_json, content_hash, parse_json)
@@ -22,7 +28,123 @@ quotes, not byte offsets. Context/digest is uncommitted context, not source proo
 
 
 class ProviderError(RuntimeError):
-    pass
+    def __init__(self, code):
+        allowed = {'unsupported_fake_stage', 'unsupported_llm_stage_or_model',
+                   'request_budget_exceeded', 'llm_unexpected_http_status',
+                   'llm_response_too_large', 'llm_invalid_response',
+                   'llm_incomplete_response', 'llm_refusal_or_tool_response',
+                   'llm_rate_limited', 'llm_http_error', 'llm_transport_failed'}
+        # Third-party providers/fakes may raise arbitrary messages. Only these
+        # fixed diagnostic codes are safe to persist or present to the model.
+        self.code = code if isinstance(code, str) and code in allowed else 'provider_unavailable'
+        super().__init__(self.code)
+
+
+WIRE_VERSION = 'openai-chat-json-1'
+REQUEST_BYTES = 65536
+
+
+def structured_payload(schema, messages, model_config):
+    # JSON-object mode is more widely supported than vendor-specific strict
+    # schema subsets (our qualifiers are extensible). Local validation is final.
+    schema_message = {'role': 'system', 'content': 'Return a JSON object matching this JSON Schema:\n' + canonical_json(schema)}
+    return {'model': model_config['model'], 'temperature': 0,
+            'messages': [messages[0], schema_message, *messages[1:]],
+            'response_format': {'type': 'json_object'}, 'stream': False}
+
+
+def request_size(schema, messages, model_config):
+    return len(canonical_json(structured_payload(schema, messages, model_config)).encode('utf-8'))
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+class OpenAICompatibleLLM:
+    """Explicitly selected HTTP provider; no tools, cookies or internal retry.
+
+    The planner owns the initial call + two retries and validates schema/anchors.
+    Transport bodies and credential values never enter identity/errors/events.
+    """
+    def __init__(self, base_url, model, api_key_env=None, *, local=False, timeout=30):
+        parsed = urlsplit(base_url)
+        if (parsed.scheme not in {'http', 'https'} or not parsed.hostname or parsed.username
+                or parsed.password or parsed.query or parsed.fragment
+                or any(ord(c) < 33 for c in base_url)):
+            raise ValueError('invalid_llm_base_url')
+        if local:
+            if parsed.hostname not in {'127.0.0.1', 'localhost', '::1'}:
+                raise ValueError('llm_local_requires_loopback')
+        elif parsed.scheme != 'https':
+            raise ValueError('remote_llm_requires_https')
+        if not isinstance(model, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}', model):
+            raise ValueError('invalid_llm_model')
+        if api_key_env is not None and not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', api_key_env):
+            raise ValueError('invalid_llm_secret_env_name')
+        token = os.environ.get(api_key_env) if api_key_env else None
+        if (api_key_env and not token) or (not local and not token):
+            raise ValueError('llm_secret_unconfigured_use_environment_settings')
+        if token and (not token.isascii() or any(c.isspace() or ord(c) < 33 for c in token)):
+            raise ValueError('invalid_llm_credential')
+        if not isinstance(timeout, (int, float)) or not 0 < timeout <= 120:
+            raise ValueError('llm_timeout_must_be_positive_at_most_120_seconds')
+        self.base_url, self.model = base_url.rstrip('/'), model
+        self._token, self.timeout = token, timeout
+        self.last_usage = {}
+        self._client = urllib.request.build_opener(_NoRedirect())
+        self.identity = {'provider': 'openai-compatible', 'model': model, 'base_url': self.base_url,
+                         'api_key_env': api_key_env, 'local_endpoint': local,
+                         'timeout_seconds': timeout, 'wire_version': WIRE_VERSION}
+
+    def generate_structured(self, stage_name, schema, messages, model_config):
+        self.last_usage = {}
+        if stage_name != 'extract' or schema != EXTRACTION_SCHEMA or model_config.get('model') != self.model:
+            raise ProviderError('unsupported_llm_stage_or_model')
+        body = canonical_json(structured_payload(schema, messages, model_config)).encode('utf-8')
+        if len(body) > model_config.get('request_budget_bytes', REQUEST_BYTES):
+            raise ProviderError('request_budget_exceeded')
+        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+        if self._token:
+            headers['Authorization'] = 'Bearer ' + self._token
+        request = urllib.request.Request(self.base_url + '/chat/completions', data=body, headers=headers, method='POST')
+        try:
+            with self._client.open(request, timeout=self.timeout) as response:
+                if response.status != 200:
+                    raise ProviderError('llm_unexpected_http_status')
+                raw = response.read(2 * 1024 * 1024 + 1)
+            if len(raw) > 2 * 1024 * 1024:
+                raise ProviderError('llm_response_too_large')
+            value = parse_json(raw.decode('utf-8'))
+            if not isinstance(value, dict):
+                raise ProviderError('llm_invalid_response')
+            usage = value.get('usage')
+            if isinstance(usage, dict):
+                self.last_usage = {k: usage[k] for k in ('prompt_tokens', 'completion_tokens', 'total_tokens')
+                                   if type(usage.get(k)) is int and 0 <= usage[k] <= 10**9}
+            choices = value.get('choices')
+            if not isinstance(choices, list) or len(choices) != 1 or not isinstance(choices[0], dict):
+                raise ProviderError('llm_invalid_response')
+            if choices[0].get('finish_reason') != 'stop':
+                raise ProviderError('llm_incomplete_response')
+            message = choices[0].get('message')
+            if not isinstance(message, dict):
+                raise ProviderError('llm_invalid_response')
+            if message.get('tool_calls') or message.get('function_call') or message.get('refusal'):
+                raise ProviderError('llm_refusal_or_tool_response')
+            content = message['content']
+            if not isinstance(content, str):
+                raise ProviderError('llm_invalid_response')
+            return parse_json(content)
+        except urllib.error.HTTPError as error:
+            # Do not read/copy the response body or exception text.
+            error.close()
+            raise ProviderError('llm_rate_limited' if error.code == 429 else 'llm_http_error') from None
+        except (OSError, TimeoutError, http.client.HTTPException):
+            raise ProviderError('llm_transport_failed') from None
+        except (ValueError, TypeError, KeyError, IndexError, RecursionError):
+            raise ProviderError('llm_invalid_response') from None
 
 
 class LLMProvider(Protocol):

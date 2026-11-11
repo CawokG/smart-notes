@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 from knowledge_ingestion.cli import scan, stable_id
+from knowledge_ingestion.sources import NoUsableSources
 from knowledge_ingestion.storage import migrate
 from knowledge_ingestion.contracts import SCHEMA_VERSION
 
@@ -76,12 +77,15 @@ class ScanTest(unittest.TestCase):
         outside = self.root / 'outside'; outside.mkdir()
         (outside / 'a.md').write_text('secret')
         link = self.root / 'link'; link.symlink_to(outside, target_is_directory=True)
-        result = scan(link / 'a.md', self.data)
-        self.assertEqual(result['documents'], [])
-        self.assertEqual(result['warnings'][0]['reason'], 'symlink')
+        with self.assertRaises(NoUsableSources) as failure:
+            scan(link / 'a.md', self.data)
+        self.assertEqual(failure.exception.result['documents'], [])
+        self.assertEqual(failure.exception.result['warnings'][0]['reason'], 'symlink')
         with self.assertRaises(ValueError):
             scan([outside, outside / 'a.md'], self.data)
-        self.assertEqual(scan(outside / 'missing.md', self.data)['warnings'][0]['reason'], 'not_found')
+        with self.assertRaises(NoUsableSources) as failure:
+            scan(outside / 'missing.md', self.data)
+        self.assertEqual(failure.exception.result['warnings'][0]['reason'], 'not_found')
 
     def test_stage1_schema_migration_preserves_every_row_and_snapshot(self):
         # Construct the actual four-table schema at stage1, not a schema2 store.

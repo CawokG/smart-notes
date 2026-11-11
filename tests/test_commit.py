@@ -232,7 +232,7 @@ class CommitTest(unittest.TestCase):
         self.assertIn('writer_busy', process.stderr)
         self.assertEqual(self.run_commit()['status'], 'complete')
 
-    def test_inherited_missing_and_hidden_directory_scan_gaps_fail_closed(self):
+    def test_changed_scan_membership_is_stale_and_hidden_directories_are_excluded(self):
         folder = self.root / 'vault'
         folder.mkdir()
         (folder / 'a.md').write_text('Atlas is a project.\nAtlas uses SQLite.')
@@ -249,9 +249,10 @@ class CommitTest(unittest.TestCase):
         (folder / '.git' / 'hidden.md').write_text('hidden')
         scanned = scan(folder, self.data)
         report = plan(scanned['collection_id'], self.data, FakeLLM(fixture))
-        with self.assertRaisesRegex(ValueError, 'stale_source'):
-            commit(self.data, report['change_set_id'], self.backend, confirmed=True, actor='tester')
-        self.assertEqual(self.backend.post_count, 0)
+        self.assertNotIn('.git/hidden.md', [d['locator'] for d in report['inputs']['documents']])
+        result = commit(self.data, report['change_set_id'], self.backend, confirmed=True, actor='tester')
+        self.assertEqual(result['status'], 'complete')
+        self.assertEqual(self.backend.post_count, 1)
 
     def test_add_evidence_and_alias_are_local_only_with_readable_existing_entity(self):
         self.run_commit()
@@ -304,10 +305,17 @@ class CommitTest(unittest.TestCase):
         backend_args = ['--backend', 'fake', '--fake-store', str(self.backend.path)]
         cli('commit', '--change-set', str(artifact), '--actor', 'cli-tester', *backend_args, good=False)
         self.assertEqual(self.backend.post_count, 0)
+
         self.assertEqual(cli('commit', '--change-set', str(artifact), '--yes', '--actor', 'cli-tester', *backend_args)['status'], 'complete')
         self.assertEqual(cli('status', '--job', self.job)['status'], 'complete')
         self.assertEqual(cli('resume', '--job', self.job, *backend_args)['status'], 'complete')
         self.assertEqual(self.backend.post_count, 1)
+
+    def test_unsupported_publication_lock_platform_fails_with_fixed_code(self):
+        with patch('knowledge_ingestion.commit.fcntl', None):
+            with self.assertRaisesRegex(ValueError, 'publication_lock_platform_unsupported'):
+                self.run_commit()
+        self.assertEqual(self.backend.post_count, 0)
 
     def test_corpus_commit_remains_offline_and_source_injection_is_inert(self):
         corpus_data = self.root / 'corpus-ledger'
@@ -389,7 +397,7 @@ class CommitTest(unittest.TestCase):
     def test_schema2_additive_migration_preserves_all_existing_rows(self):
         self.run_commit()
         with connect(self.data) as db:
-            for table in ('review_decisions', 'commit_sessions', 'outbox'):
+            for table in ('review_decisions', 'commit_sessions', 'outbox', 'scan_membership', 'collection_scans'):
                 db.execute('DROP TABLE ' + table)
             db.execute('PRAGMA user_version=2')
             tables = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")]
@@ -400,7 +408,7 @@ class CommitTest(unittest.TestCase):
             migrate(db)
             for table, rows in before.items():
                 self.assertEqual(db.execute('SELECT * FROM ' + table).fetchall(), rows, table)
-            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], 3)
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], 4)
             self.assertEqual(db.execute('PRAGMA foreign_key_check').fetchall(), [])
 
 

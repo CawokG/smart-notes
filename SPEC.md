@@ -1,6 +1,6 @@
 # Knowledge Ingestion & Reconciliation Engine — спецификация прототипа V1
 
-**Статус:** целевая спецификация V1; реализация на начальной стадии (сверка 2026-11-10)  
+**Статус:** целевая спецификация V1; текущая реализация — проверяемый прототип с частичным приёмочным статусом (сверка 2026-11-11, Europe/Moscow)
 **Дата:** 2026-11-10  
 **Назначение:** самостоятельное техническое задание для агентной системы разработки.  
 **Язык реализации и интерфейсов:** на усмотрение существующего репозитория; reference stack для нового проекта — Python 3.12+, Pydantic 2, Typer, SQLite, HTTPX.  
@@ -11,16 +11,16 @@
 
 ## Состояние реализации и порядок чтения
 
-Этот документ сохраняет целевые требования приложенной спецификации V1; описанные ниже компоненты и контракты не следует считать уже реализованными. Исходный AGENT_HANDOFF и эта спецификация были сопоставлены с текущим рабочим деревом 2026-11-10. Ближайшие задачи и критерии их приёмки находятся в [docs/NEXT_TASKS.md](docs/NEXT_TASKS.md). Разделы 0–18 описывают целевое поведение и последовательность будущей реализации, а не инструкции выполнять всю разработку при любом обращении к документу.
+Этот документ сохраняет целевые требования V1 и не заменяет фактическую матрицу проверок. Реализованная часть описана в [docs/VALIDATION.md](docs/VALIDATION.md) и [docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md); прототип принят частично, production V1 не объявлен. Разделы 0–18 сохраняют целевое поведение и ограничения, а не утверждение, что каждый компонент уже готов.
 
 | Область | Состояние в репозитории |
 |---|---|
-| CLI и источники | Есть только `scan` одного `.md`/`.txt` файла; каталоги отклоняются. Поддержки Obsidian, индекса ссылок и chunking нет. |
-| Snapshot и хранилище | Исходные байты сохраняются по SHA-256; SQLite содержит только таблицу `revisions` с `root`, `path`, `sha256`, `snapshot`, включены WAL и foreign keys. Это не целевая схема и не система миграций. |
-| Проверки | Три unit-теста покрывают повтор сканирования с BOM/UTF-8, неверный UTF-8 и отказ для каталога. Полный набор §12 и quality gates §13 не проверены. |
-| Pipeline | Извлечение, FakeLLM и реальный LLM, identity/evidence, reconciliation, ChangeSet и команды `plan`, `review`, `commit`, `status`, `resume` отсутствуют. |
-| MuninnDB и recovery | Адаптера и записи нет. В удалённой ветке закреплена версия MuninnDB v0.9.0 и описана проверка запуска и health endpoint на Linux x86-64; read/write, observe, Entity Graph и поиск marker не проверены. Подробности — в `integrations/muninn-compatibility.md`. Outbox и восстановление отсутствуют. |
-| Фикстуры и документация | Упомянутые в §12 `fixtures/obsidian/` и `fixtures/expected.json` в текущем дереве отсутствуют и должны быть созданы; их содержимое не приложено к задаче. `ARCHITECTURE.md`, `KNOWN_LIMITATIONS.md`, demo и отчёт о качестве отсутствуют. |
+| CLI и источники | `scan`, `plan`, `review`, `commit`, `status`, `resume`; рекурсивный UTF-8 scan, shared intake policy, hidden-tree exclusion и current membership реализованы. |
+| Snapshot и хранилище | Schema4 additive migrations, exact snapshots/chunks/evidence, staged/committed ledger, review history and outbox реализованы; IDs сохраняют stage1 SHA-256 encoding. |
+| Проверки | 97 offline tests, controlled HTTP provider tests, clean install, demo and pinned MuninnDB/product smokes recorded in `docs/VALIDATION.md`. |
+| Pipeline | FakeLLM and explicit OpenAI-compatible adapter, exact anchors, conservative resolution, deterministic ChangeSet and publication recovery реализованы; semantic quality remains unmeasured. |
+| MuninnDB и recovery | Pinned v0.9.0 adapter/read-write/read-back/observe smoke and recovery boundaries verified on disposable Linux instance; exhaustive marker recovery unsupported and unknown POST requires manual repair. |
+| Фикстуры и документация | Synthetic corpus, demo, architecture, limitations, config reference, validation matrix and sanitized examples are present. |
 
 README описывает ограничение текущего прототипа одним файлом. Это описание текущей реализации, а не сокращение согласованной цели V1: один или несколько файлов и рекурсивный импорт папки, включая папку Obsidian, остаются обязательными; специальный разбор Obsidian вынесен за V1. Фактический интерфейс сегодня — `python -m knowledge_ingestion.cli scan <file> --data <dir>`; примеры остальных команд в §8 являются целевыми. Наличие `sqlite`-индекса и повторяемого scan не доказывает безопасность commit или полноту инвариантов V1.
 

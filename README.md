@@ -1,36 +1,114 @@
-# Knowledge ingestion — review and publication prototype
+# Knowledge ingestion — reviewable V1 prototype
 
-This is an incomplete V1 implementation. It provides deterministic snapshots, scripted FakeLLM planning, operation review and confirmed publication to pinned MuninnDB v0.9.0. The default plan remains offline; a real LLM and the final V1 quality gates remain stage 5 work.
+A Python CLI for selected UTF-8 notes: exact snapshots → structured extraction → conservative identity/claim reconciliation → immutable ChangeSet → review → confirmed publication. SQLite keeps identities, provenance and workflow state; pinned MuninnDB stores published readable memories.
 
-The scanner accepts one or more explicitly selected UTF-8 `.txt`/`.md` files, or one directory recursively. It stores exact snapshots and produces deterministic byte ranges for heading/paragraph chunks. `.obsidian`, the data directory and symbolic links are excluded; links and frontmatter remain uninterpreted source text. See [SPEC.md](SPEC.md), [the next tasks](docs/NEXT_TASKS.md) and [the stage handoff](docs/AGENT_HANDOFF.md).
+This is a **reviewable prototype, not production V1 ready**. The real OpenAI-compatible adapter is implemented and tested against a controlled HTTP server. External LLM credentials are unconfigured; semantic precision/recall on real corpora are **not measured**. Pinned MuninnDB read/write and recovery boundaries were verified on a disposable Linux instance. See [validation results](docs/VALIDATION.md), [known limitations](KNOWN_LIMITATIONS.md), [architecture](ARCHITECTURE.md) and [target SPEC](SPEC.md).
 
-Python 3.12+ examples:
+## Clean installation
+
+Python **3.12+**, Git and a writable local directory are required. Runtime uses only the Python standard library; installation downloads the setuptools build dependency when needed.
+
+```sh
+git clone https://github.com/CawokG/smart-notes.git smart-notes
+cd smart-notes
+python -m venv .venv
+.venv/bin/python -m pip install .
+.venv/bin/ki --help
+```
+
+The commands below use `python -m knowledge_ingestion.cli` from the checkout; after activating `.venv`, `ki` is equivalent. For an installed wheel, run `ki` from any directory. A fresh venv installation and the installed console script's entire fake CLI flow were checked from an unrelated working directory.
+
+**Publication/review locking is verified on Linux only.** Windows lacks `fcntl`/the required lock primitives and receives `publication_lock_platform_unsupported`; macOS publication is untested. Scan/plan and the portable HTTP adapter do not require `fcntl`. The full offline suite currently targets Linux.
+
+For the optional pinned MuninnDB binary, `python scripts/setup.py` downloads v0.9.0, verifies its platform-specific checksum, installs it in `.local/bin`, and installs the app in `.venv`. On Windows: `py -3 scripts/setup.py`. Linux/macOS x86-64/ARM64 and Windows x86-64 release artifacts are listed; only Linux x86-64 was executed here. GitHub releases and PyPI access are required. Installation does not create vault-bound observe/full credentials.
+
+## Safe synthetic demonstration
+
+```sh
+python scripts/demo.py --output work/my-demo
+```
+
+Use a new/empty directory. The script copies only `fixtures/obsidian`, explicitly chooses FakeLLM and the durable fake backend, and runs scan → plan → review decision → commit → status/resume → identical reimport. It writes `report.json`, `report.md`, the original ChangeSet, decisions and per-step JSON artifacts. Expected: **5 files, 57/57 chunks, 2 new fake memories, 2→2 fake POSTs after repeat**, with unresolved/conflicting operations retained. No network or real credentials are used. FakeLLM is scripted by `(document_path, chunk_ordinal)`; unscripted chunks return empty proposals. This tests workflow, not extraction quality.
+
+Checked-in examples: [machine report](examples/report.json), [human summary](examples/report.md), [full ChangeSet](examples/change-set.json). Paths/IDs in those examples belong to a synthetic run; generate fresh artifacts for your own review.
+
+## Scan sources
 
 ```sh
 python -m knowledge_ingestion.cli scan ./note.md --data ./data
 python -m knowledge_ingestion.cli scan ./one/a.md ./two/a.md --data ./data
 python -m knowledge_ingestion.cli scan ./vault --data ./data --max-bytes 5242880
-python -m knowledge_ingestion.cli scan ./fixtures/obsidian --data ./data
-# Use collection_id from the scan JSON:
+```
+
+Select one directory recursively, or one/more explicit files. Supported: UTF-8 `.md`/`.txt` including BOM. Hidden directory trees (`.git`, `.obsidian`, `.cache`, etc.), symbolic links/linked ancestors and the application data tree are excluded. Explicit paths through hidden directory ancestors are also skipped. Hidden filenames in an ordinary directory are allowed. Directory traversal ignores other extensions; unsupported explicitly selected files produce warnings. Links, frontmatter and Obsidian syntax remain uninterpreted text; no links, plugins or source commands are executed.
+
+The **valid subset** is current membership. Missing, oversized, invalid UTF-8/binary and unreadable inputs are skipped with warnings. If none are usable, scan exits **1** with `no_usable_sources`, an empty document list and its warnings. A rescan updates membership even when all inputs become invalid. Documents/revisions/snapshots/evidence and committed memories remain as history; removed/ineligible committed sources produce `possibly_stale_source`, without deleting memory.
+
+Scan and precommit use the **same eligibility policy and original max-bytes**. A skipped file may stay skipped (even if its invalid bytes change). A newly eligible input, an edited/disappeared valid file, or a valid file becoming ineligible makes an old plan `stale_source`. Changes only inside excluded trees do not invalidate it. Run sources from stable storage; hostile/concurrent filesystem edits are outside the atomicity guarantee.
+
+IDs retain the stage1 `prefix_SHA256` encoding: collection identity uses the absolute directory URI or sorted unique explicit file selections; document identity uses collection + locator, revision identity uses document + byte hash. Missing/skipped explicit selections remain part of selection intent, so disappearance does not silently change that collection. Normal stage1 valid-selection IDs remain unchanged. Moving a source creates a new identity candidate. Equal content does not merge documents.
+
+Chunks preserve exact half-open UTF-8 byte ranges, BOM included. Heading/paragraph chunking targets at most 9000 source bytes with bounded whole-segment overlap. This is a byte approximation, not a tokenizer/sentence guarantee. Snapshot files are content-addressed. Schema4 migrations preserve unversioned/stage1/schema2/schema3 data and IDs; historical collections require **rescan** to establish trustworthy current membership. Old plans stay stored but require replanning under current config/code versions.
+
+## Plan: offline by default
+
+Copy `collection_id` from scan JSON:
+
+```sh
 python -m knowledge_ingestion.cli plan --collection col_... --data ./data \
   --llm-provider fake --fixture ./fixtures/offline-extraction.json \
   --output ./data/change-set.json
-python -m unittest discover -s tests -v
 ```
 
-The JSON report includes warnings, collection/document/revision IDs and chunk byte ranges. IDs use SHA-256 over version-independent JSON-encoded identity components: a directory collection uses its absolute file URI, a selected-files collection uses the sorted unique set of absolute file URIs; document identity uses the collection and relative path or file URI, and revision identity uses document ID and the SHA-256 of the source bytes. Editing a file creates a revision; moving it creates a new document identity. Content hashes alone do not merge documents. A BOM is retained in the snapshot and byte offsets; chunks use half-open byte ranges and decode as UTF-8. Chunk sizes and overlap are byte-based approximations, not tokenizer guarantees. Links are never followed as a result of their contents.
+The default provider is fake and requires a fixture; there is no automatic real-provider/fake-backend fallback. Plan validates the extraction schema and exact snapshot anchors before staging operations. Initial call + **at most two retries per incomplete chunk per invocation** apply to provider, schema and anchor failures. After exhaustion, the chunk has no completed checkpoint; the job is `needs_attention`, keeps a deferred operation and exits 1. Retrying/resuming is explicit; completed chunks are not resent.
 
-SQLite `user_version=3` preserves the stage1/schema2 rows and IDs and adds review history, commit sessions and a durable outbox. The schema2→3 migration is additive and transactional. An existing unversioned `revisions` table and its snapshot files remain intact alongside the new tables. Existing legacy rows are retained as history, not automatically associated with new collections, because their original collection intent cannot be inferred. Rescan sources to index them in the new schema. A newer unsupported schema is rejected. Snapshots may contain private information and are stored unencrypted as exact bytes; avoid scanning a directory while it is being modified by an untrusted process.
+Config pins provider/model/endpoint/env selector/timeout/wire format, schema+prompt versions and hashes, parser/rules/context versions, source policy, request/digest budgets and optional observe backend identity. Secrets are excluded. `--digest-bytes` accepts 512–16384 (default 4096). `--request-bytes` accepts 16384–262144 (default **65536**) and bounds the complete serialized HTTP JSON body, including prompts, schema, source, metadata, feedback and context. It is a byte budget, not a token/cost guarantee. Source text is never silently truncated; if it cannot fit, the chunk stays incomplete without an HTTP call.
 
-`plan` processes chunks sequentially, validates a versioned extraction schema and anchors quotes against the scanned snapshot bytes. It records a job, checkpoints, proposed identities/aliases/claims and a deterministic JSON ChangeSet with operation dependencies, decisions, reason codes and provenance. Committed indexes and other jobs' staging remain isolated. Repeating a completed plan returns the same artifact; repeating an interrupted plan with the same configuration resumes from successful chunk checkpoints. Invalid schema/anchors or provider errors receive at most two retries after the initial call, then produce `needs_attention`, a deferred operation and exit code 1. The failed chunk is not completed.
+Provider context is a shortlist: at most 64 entities, 64 approved aliases, 40 claims, 12 structured external candidates, 7 retrieved snippets and a bounded staged digest. Entries above 2048 serialized bytes are omitted whole; further tail entries are removed to fit the wire budget. Explicit metadata records original/omitted counts. Full local resolution/reconciliation still reads the entire committed ledger plus this job's staging. Numeric usage reported by the real API is retained; cost is null/unmeasured. Events retain request hashes/counts and retrieval IDs, not source/prompt/response bodies.
 
-The fake provider returns proposals explicitly scripted by `(document_path, chunk_ordinal)` in the fixture; other chunks return empty proposals. It does not understand arbitrary notes. The supplied corpus demonstrates direct aliases, cross-file evidence, two distinct people named Алексей, uncertainty, time and conflicting statuses. Its long note tests chunk sequencing and bounded digest, not extraction recall. The fixture's frontmatter aliases and links do not establish identities or relationships. The pipeline makes no network calls and sends no data to an external provider. A future real provider will require explicit configuration and disclosure of transmitted source/context data.
+`approved` in the immutable plan is a local policy result. It does not publish or replace explicit commit confirmation. Negative polarity and known ISO time are preserved; unresolved identity, relative time, nonasserted modalities and conflicts remain deferred. Simple lexical rules/exact anchors do not establish semantic entailment in arbitrary languages.
 
-The planner retains polarity, modality and ISO time qualifiers; unresolved relative time, questions, speculation, reported speech, uncertain identities and conflicts are deferred. Exact names and document proximity do not prove that people/accounts are the same; fuzzy matches are shortlists for review. Unknown custom entity types retain `type_label` under `other`. Existing importer claims can be deduplicated or reinforced in a proposed ledger operation, while external snippets remain possible matches. `approved` in a plan is a local policy result, not publication or user approval. The CLI below applies review decisions and publishes through a separate single-writer service. A real LLM is not implemented.
+## Configure a real LLM explicitly
 
-## Review, commit and recovery
+Use environment/settings to provision the secret; never pass the key value as a CLI argument or put it in Git. [config.example.json](config.example.json) documents option names/defaults and environment variable **names only**; the CLI does not implicitly load that file.
 
-Keep the original ChangeSet JSON intact. `review` records decisions separately in SQLite with actor, rationale and UTC timestamp; inspecting review shows operation IDs, quotes, filenames and headings. `--change-set` accepts the original file or its persisted `chg_...` ID.
+```sh
+# KNOWLEDGE_LLM_API_KEY is already set securely in this process environment.
+python -m knowledge_ingestion.cli plan --collection col_... --data ./data \
+  --llm-provider openai-compatible \
+  --llm-base-url https://api.openai.com/v1 --llm-model <chosen-model> \
+  --llm-api-key-env KNOWLEDGE_LLM_API_KEY --llm-timeout 30 \
+  --request-bytes 65536 --output ./data/change-set.json
+```
+
+The endpoint must implement `POST <base-url>/chat/completions`, `response_format: {"type":"json_object"}`, `temperature:0`, nonstreaming choices/message/content JSON and `finish_reason:stop`. The supplied JSON Schema is included in the system messages and enforced locally. No tools/functions or write APIs are supplied. Some models/endpoints do not support these options; refusal/truncation/malformed envelopes and HTTP/transport errors remain incomplete, with fixed error codes. There are no SDK/internal retries or redirect forwarding.
+
+An explicitly local loopback endpoint may use HTTP and no API key:
+
+```sh
+python -m knowledge_ingestion.cli plan --collection col_... --data ./data \
+  --llm-provider openai-compatible --llm-local \
+  --llm-base-url http://127.0.0.1:8000/v1 --llm-model <local-model> \
+  --output ./data/change-set.json
+```
+
+`--llm-local` accepts loopback hosts only. Remote endpoints require HTTPS and a configured env secret. A local server can itself forward data externally; its locality/privacy must be established separately. No real external LLM run is claimed by this repository's current validation.
+
+**Data sent to the selected provider:** exact current chunk text; scoped document locator/file URI, headings, IDs and ordinal; versioned extraction prompt/schema; bounded committed entities/aliases/claims; this job's staged digest/context; optional retrieved Muninn snippets/IDs; fixed validation feedback on retries. A provider can therefore see selected source text, local paths and existing-memory context. It receives no backend tokens, source execution capability, tools or direct database write rights. The LLM API secret appears only in the HTTP Authorization header to the selected endpoint. Reports/ChangeSets intentionally retain validated evidence quotes; keep those and SQLite/snapshots private. Storage is plaintext and unencrypted. There is no content-secret detection/redaction of text you explicitly choose to send.
+
+Optional **read-only backend context** is independent of LLM selection:
+
+```sh
+python -m knowledge_ingestion.cli plan --collection col_... --data ./data \
+  --llm-provider fake --fixture ./fixtures/offline-extraction.json \
+  --context muninn-observe --muninn-url http://127.0.0.1:8475
+```
+
+This requires `MUNINN_OBSERVE_TOKEN` (or `--observe-token-env NAME`). It performs bounded health/GET/ACTIVATE with that key and an explicit local-ledger fallback. Full-key reads are not used. Retrieved snippets remain untrusted possible matches. They are **not** translated into a complete structured semantic legacy conflict/dedup gate; semantic legacy reconciliation is partial. Native name aggregates never become canonical local identities. Observe exposed counters were unchanged in a limited live window, but hidden cognitive feedback remains unmeasured.
+
+## Review, commit, status and resume
+
+Keep the original ChangeSet intact. `--change-set` accepts its persisted `chg_...` ID or an exactly matching original JSON file.
 
 ```sh
 python -m knowledge_ingestion.cli review --change-set ./data/change-set.json --data ./data
@@ -38,7 +116,7 @@ python -m knowledge_ingestion.cli review --change-set ./data/change-set.json --d
   --decisions ./review-decisions.json --actor local-user
 ```
 
-A decisions file contains an explicit batch. Reject/defer dependent operations together when rejecting their dependency. Unsafe defer/conflict operations cannot become publishable by approving a review flag; resolve the source/identity and generate a new plan.
+A batch of decisions is append-only history with actor/rationale/UTC timestamp. Reject/defer dependent operations together. Unsafe defer/conflict operations cannot become publishable by approving a flag; resolve the source/identity and replan. Decisions freeze after commit begins.
 
 ```json
 {"version":"1.0","decisions":[
@@ -46,7 +124,7 @@ A decisions file contains an explicit batch. Reject/defer dependent operations t
 ]}
 ```
 
-For a completely offline workflow, explicitly select the durable **fake backend**. Its exhaustive marker recovery is a test guarantee, not a MuninnDB capability:
+For offline publication, select the fake backend **explicitly**:
 
 ```sh
 python -m knowledge_ingestion.cli commit --change-set ./data/change-set.json --data ./data \
@@ -56,49 +134,52 @@ python -m knowledge_ingestion.cli resume --job job_... --data ./data \
   --backend fake --fake-store ./work/FAKE-backend.sqlite3
 ```
 
-For real publication, set `MUNINN_OBSERVE_TOKEN` and `MUNINN_FULL_TOKEN` in the process environment to **separate vault-bound observe/full API keys** for the plan's vault. The product uses bearer auth without admin cookies. Alternative environment variable names can be selected with `--observe-token-env` / `--full-token-env`. Remote servers require HTTPS; plaintext is accepted only on loopback.
+For real publication, provision **separate vault-bound observe/full keys** in `MUNINN_OBSERVE_TOKEN` / `MUNINN_FULL_TOKEN`; select alternate env names with `--observe-token-env` / `--full-token-env`. The plan's `--vault` must match both keys. No admin cookies are used. Remote Muninn requires HTTPS; HTTP is loopback-only.
 
 ```sh
 python -m knowledge_ingestion.cli commit --change-set ./data/change-set.json --data ./data \
   --backend muninn --muninn-url http://127.0.0.1:8475 --actor local-user --yes
 python -m knowledge_ingestion.cli resume --job job_... --data ./data \
   --backend muninn --muninn-url http://127.0.0.1:8475
-# Optional bounded read-only context; default plan remains offline:
-python -m knowledge_ingestion.cli plan --collection col_... --data ./data \
-  --fixture ./fixtures/offline-extraction.json --context muninn-observe \
-  --muninn-url http://127.0.0.1:8475
 ```
 
-Omit `--yes` only when using a terminal: commit asks for the literal response `yes`. Noninteractive commit refuses without `--yes` before opening a backend or preparing publication. `resume` continues a previously confirmed commit and requires the same backend configuration. An interrupted fake planning job uses `resume --job job_... --data ./data --fixture <original-fixture>`; add the original `--context muninn-observe --muninn-url ...` when that context was selected. Changes to its fixture, versions, source manifest, originals, snapshots or committed ledger require a new plan. `--expected-config-hash` can additionally pin the config hash shown by status.
+Without `--yes`, a terminal asks for literal `yes`. Noninteractive commit refuses before preparing a session/backend. `resume` continues an already confirmed commit with the original backend identity. Interrupted planning requires the original provider options/fixture and optional observe options:
 
-Each create operation is durably prepared before its POST. The service persists its attempt, known ID, exact read-back and local application; repeat commit/reimport does not create another engram. Alias/evidence reinforcement changes only the local ledger. Prior engrams are never updated, merged, evolved or deleted. `complete_with_deferred` preserves every rejected/deferred operation in status; it does not publish those operations.
+```sh
+python -m knowledge_ingestion.cli resume --job job_... --data ./data \
+  --llm-provider fake --fixture ./fixtures/offline-extraction.json
+# Real planning: repeat original --llm-provider/--llm-base-url/--llm-model/
+# --llm-api-key-env/--llm-local/--llm-timeout and --context/--muninn-url if used.
+```
 
-Pinned MuninnDB has **no exhaustive marker lookup across all lifecycle states**. Unknown POST outcomes remain `needs_manual_repair`, and resume never retries that POST. A trustworthy ID obtained independently can be supplied for exact verification:
+Resume reuses the original request/digest budgets and requires matching model/provider/context/config hashes, source membership, originals, snapshots and committed revision. `--expected-config-hash` pins the value from status. Changed inputs/config require a new scan/plan; source changes during partial commit may require operator reconciliation. `status` lists every unapplied/rejected/deferred operation, outbox attempts/known IDs, session/confirmation, review history and a bounded redacted event timeline. Plan/status JSON can be saved by shell redirection; there is no separate export command or background sync.
+
+Publication durably prepares an outbox operation before POST, records attempts/known IDs, verifies exact vault-bound read-back, then atomically applies local projections. Repeat commit/reimport does not create another engram. Alias/evidence reinforcement is local-only. Previous engrams are never updated, merged, evolved or deleted. `complete_with_deferred` retains unapplied decisions visibly.
+
+**Pinned MuninnDB has no exhaustive marker lookup across lifecycle states.** Unknown POST outcomes remain `needs_manual_repair`; resume never blindly repeats that POST. A trustworthy ID obtained independently can be verified:
 
 ```sh
 python -m knowledge_ingestion.cli resume --job job_... --data ./data \
   --backend muninn --muninn-url http://127.0.0.1:8475 \
   --repair-operation op_... --engram-id <known-ULID> \
-  --actor local-operator --rationale 'Inspected the existing operation record'
+  --actor local-operator --rationale 'Inspected the original operation record'
 ```
 
-The ID is applied only after vault-bound GET matches concept, content, tags/marker and confidence. This does not discover a lost ID. Known 4xx refusals also remain terminal/manual and are never retried automatically; there is no CLI action to abandon such a publication yet. An unresolved attempted outbox blocks fresh jobs in that vault, so replan cannot silently bypass an uncertain write with a new marker. Source/config changes during a partial commit fail closed and may need operator-led reconciliation.
+This verifies vault/ID/concept/content/full tag set/marker/confidence; it does not discover a lost ID. Known 4xx refusals are also terminal/manual, with no automatic retry or CLI abandon action. An unresolved attempted outbox blocks new jobs in that vault. Guarantees require **one authoritative ledger per backend/vault**, plus the same-OS-account vault lock. Cross-ledger/host/account coordination is not provided. The fake backend's exhaustive-marker recovery is solely a test guarantee.
 
-Publication uses an OS-account vault lock (`flock`, tested on Linux) and one authoritative ledger per backend/vault. Cross-host, cross-account and independent-ledger coordination are not provided. Do not change originals/snapshots concurrently with commit. The inherited scanner still includes hidden directories, reports empty success for all-invalid inputs, and retains removed documents on rescan; commit rejects missing/hidden/unlisted eligible files instead of publishing stale material. These scanner defects and full Gate B acceptance remain mandatory stage 5 work. Directory collections with skipped eligible files are intentionally rejected by this conservative preflight.
+To start an optional local MuninnDB after setup: `MUNINN_LOCAL_EMBED=0 .local/bin/muninn --daemon --data ./data/muninn`. It runs in the foreground. Default bootstrap credentials/public vault need separate administration before any real use. Embeddings/enrichment are disabled by this prototype setup; semantic retrieval with a real embedder is unverified. The synthetic smoke scripts perform their own temporary bootstrap and require no existing server.
 
-Observe context uses bounded GET/ACTIVATE with explicit local-ledger fallback, no full-key reads, and no publication. Native entity names and external snippets never become canonical local IDs or source evidence. Complete legacy semantic reconciliation is not implemented. Observe access counters were unchanged in the capability spike, but hidden cognitive feedback is unmeasured; complete cognitive immutability is not claimed.
+## Validation
 
 ```sh
-# Own temporary loopback instance, synthetic sources and random transient keys;
-# no existing server/data-directory option; pinned binary required:
+python -m unittest discover -s tests -v
+python -m compileall -q knowledge_ingestion scripts tests
+git diff --check
+python scripts/smoke_muninn.py --binary work/muninn-spike/muninn-linux-amd64 \
+  --output work/capability-report.json
+# Run after the preceding smoke has exited; do not run product smokes concurrently.
 python scripts/smoke_commit.py --binary work/muninn-spike/muninn-linux-amd64 \
-  --output work/commit-smoke/report.json
+  --output work/product-report.json
 ```
 
-## Install MuninnDB and the application
-
-Install Python 3.12 or newer and Git, clone this repository, then run `python scripts/setup.py` (on Windows, `py -3 scripts/setup.py`). The script downloads the pinned upstream MuninnDB v0.9.0 binary, checks its SHA-256 against pinned release checksums, and installs it in `.local/bin`. It creates `.venv` and installs the application there. Internet access to GitHub releases and PyPI is required. Repeat the command to refresh the application; a matching binary is reused. Supported release binaries are Linux and macOS on x86-64/ARM64 and Windows x86-64; only Linux x86-64 has been tested here. Docker is not required.
-
-To start a local server on Linux/macOS, run `MUNINN_LOCAL_EMBED=0 .local/bin/muninn --daemon --data ./data/muninn`. On Windows PowerShell, run `$env:MUNINN_LOCAL_EMBED='0'; .\.local\bin\muninn.exe --daemon --data .\data\muninn`. The process runs in the foreground; stop it with Ctrl+C. Data persists in `data/muninn`. Enrichment and the local embedder are disabled for this setup; semantic search requires a configured embedder. The server defaults to loopback and creates initial administrative credentials and a public default vault; secure these before exposing it to other users or networks. See upstream MuninnDB documentation for authentication and production deployment.
-
-Publication requires private-vault credentials configured separately as described above. Installing and starting the server does not complete V1 or configure its permissions.
+Live scripts accept no existing URL/store. They checksum the pinned binary, start only their own fresh loopback child with synthetic storage/random transient credentials, disable embeddings/enrichment and remove temporary storage after stopping it. They refuse ambient `~/.muninn/muninn.env` (including symlinks), rather than modifying the user's settings. The capability harness archives/deletes only its newly created synthetic fixtures; the product publisher exposes no destructive operations. See [all 15 scenarios, gates and DoD results](docs/VALIDATION.md) and [pinned API evidence](integrations/muninn-compatibility.md).

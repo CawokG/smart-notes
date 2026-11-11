@@ -5,7 +5,10 @@ that checkpoint ALWAYS reconciles first. Unknown pinned-Muninn outcomes never
 cause a second POST. Hooks exist solely for deterministic offline crash tests.
 """
 from contextlib import contextmanager
-import fcntl
+try:
+    import fcntl
+except ImportError:  # Keep scan/plan/status importable on unsupported platforms.
+    fcntl = None
 import json
 import os
 from pathlib import Path
@@ -22,6 +25,8 @@ from .storage import committed_revision, connect, contains_symlink, now
 def vault_lock(vault):
     # Shared between CLI processes/data dirs on this OS account, even when they
     # select different backend URLs. flock is released by the OS after a crash.
+    require(fcntl is not None and hasattr(os, 'getuid') and hasattr(os, 'O_NOFOLLOW'),
+            'publication_lock_platform_unsupported')
     directory = Path(tempfile.gettempdir()) / ('knowledge-ingestion-locks-' + str(os.getuid()))
     require(not contains_symlink(directory), 'invalid_vault_lock_path')
     directory.mkdir(mode=0o700, exist_ok=True)
@@ -390,14 +395,18 @@ def resume_job(data, job_id, adapter=None, provider=None, context_provider=None,
         from .context import OfflineContextProvider
         context = context_provider or OfflineContextProvider()
         require(provider.identity == config['llm'] and context.mode == config['context_mode']
-                and getattr(context, 'identity', None) == config.get('context_backend_identity'), 'replan_required')
+                and getattr(context, 'identity', None) == config.get('context_backend_identity')
+                and content_hash(context.external_candidates) == config['external_candidates_hash'], 'replan_required')
+        if kwargs.get('expected_config_hash'):
+            require(kwargs['expected_config_hash'] == job['config_hash'], 'replan_required')
         require(committed_revision(db, job['vault_id']) == job['base_revision'], 'replan_required')
         if change:
             original, _, _ = load_change_set(db, change[0])
             check_sources(db, original, data)
         from .planner import plan
         result = plan(job['collection_id'], data, provider, vault=job['vault_id'],
-                      digest_budget=config['digest_budget_bytes'], context_provider=context)
+                      digest_budget=config['digest_budget_bytes'], context_provider=context,
+                      request_budget=config['request_budget_bytes'])
         require(result['job_id'] == job_id, 'replan_required')
         return result
     finally:

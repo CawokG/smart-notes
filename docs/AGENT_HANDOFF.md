@@ -1,4 +1,20 @@
-# Knowledge Ingestion V1 — этап 4: review, publication и recovery
+# Knowledge Ingestion V1 — этап 5: final validation and handoff
+
+Проверено **11 ноября 2026, 13:00 Europe/Moscow (UTC+3)**. Входной SHA этапа 5: `72d1228fea4d4d033bbd1634225ece9fa0b64250`, ветка `codex/prototype-stages`. Финальный supervisor commit добавляет изменения ниже; рабочее дерево до этого этапа было чистым.
+
+## Результат этапа 5
+
+- Исправлена общая политика intake и текущего membership: hidden service trees исключаются, all-invalid scan завершается `no_usable_sources` с warnings, removed/ineligible documents исчезают из текущего plan membership при сохранении revisions/snapshots/evidence и `possibly_stale_source`; precommit повторяет ту же policy.
+- Добавлен явный OpenAI-compatible HTTP provider с HTTPS/loopback rules, env-selected secret, schema/prompt/wire hashes, full serialized request budget, fixed safe errors, bounded planner retries and resume configuration checks. Controlled loopback HTTP tests PASS; external credentials отсутствуют.
+- Добавлены `ARCHITECTURE.md`, `KNOWN_LIMITATIONS.md`, `config.example.json`, `scripts/demo.py`, `docs/VALIDATION.md`, sanitized examples and regressions.
+
+Проверки: **97/97 tests PASS**, compileall PASS, diff-check PASS; demo PASS; clean venv/installed `ki` flow PASS; independent pinned capability and product smokes PASS_with_documented_limitations, temporary daemons/stores removed. Внешний LLM BLOCKED/unconfigured; semantic precision/recall and hidden cognitive feedback NOTMEASURED. Overall status: **PARTIAL prototype acceptance**, production V1 не объявляется.
+
+Ограничения для отдельно настроенной работы: real semantic quality, full legacy semantic reconciliation, exhaustive Muninn marker recovery, distributed/cross-host locking, non-Linux publication and terminal 4xx abandonment remain open. См. [VALIDATION.md](VALIDATION.md) и [KNOWN_LIMITATIONS.md](../KNOWN_LIMITATIONS.md).
+
+---
+
+# Исторический handoff этапа 4: review, publication и recovery
 
 Проверено **2026-11-10**, live product run **20:38 UTC / 23:38 Europe/Moscow**. Репозиторий `/workspace/smart-notes`, ветка **`codex/prototype-stages`**.
 Входной SHA этапа 4: **`c0a96f5f1e0a3787255c6dd9df89ae0a93480e1e`** (`HEAD=origin/codex/prototype-stages`, этап 3 reviewed/committed/pushed; дерево на входе чистое). Этап 2: `8daf7afc1a392495add5da19a8a0349fd78c026e`; base main `c0f2acde75041271b812280d62edd46fbc254a02`.

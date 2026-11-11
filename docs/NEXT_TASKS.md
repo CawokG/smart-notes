@@ -45,7 +45,9 @@
 
 ## 5. Реальный провайдер и итоговая проверка
 
-- [ ] Исправить inherited scanner gaps: исключить `.git` и другие hidden service dirs, возвращать ошибку при all-invalid intake, отмечать отсутствующие документы актуального scan без потери revisions/evidence; добавить регрессии и заново проверить полный Gate B. До исправления сохранять fail-closed precommit.
-- [ ] Добавить конфигурируемый реальный LLM adapter с ограниченными retry, версиями схемы/prompts и явным выбором провайдера; описать, какие данные ему отправляются. Секреты не включать в отчёты и журнал.
-- [ ] Добавить README с установкой и полным CLI, `ARCHITECTURE.md`, `KNOWN_LIMITATIONS.md`, demo-скрипт и пример отчёта. Составить таблицу результатов всех сценариев §12 и quality gates §13 с реальными статусами и ограничениями.
-- [ ] Запустить offline suite и доступные live smoke-тесты; зафиксировать команды и результаты. Не объявлять V1 готовым на основании заглушек или отсутствующей интеграции.
+- [x] Исправить inherited scanner gaps: исключить `.git` и другие hidden service dirs, возвращать ошибку при all-invalid intake, отмечать отсутствующие документы актуального scan без потери revisions/evidence; добавить регрессии и заново проверить полный Gate B. До исправления сохранять fail-closed precommit.
+- [x] Добавить конфигурируемый реальный LLM adapter с ограниченными retry, версиями схемы/prompts и явным выбором провайдера; описать, какие данные ему отправляются. Секреты не включать в отчёты и журнал.
+- [x] Добавить README с установкой и полным CLI, `ARCHITECTURE.md`, `KNOWN_LIMITATIONS.md`, demo-скрипт и пример отчёта. Составить таблицу результатов всех сценариев §12 и quality gates §13 с реальными статусами и ограничениями.
+- [x] Запустить offline suite и доступные live smoke-тесты; зафиксировать команды и результаты. Не объявлять V1 готовым на основании заглушек или отсутствующей интеграции.
+
+**Результат этапа 5:** 97/97 offline tests PASS; scanner membership/schema4, controlled OpenAI-compatible HTTP adapter and full request budgets, clean install, synthetic demo, pinned MuninnDB capability/product smokes and validation matrix completed. External LLM semantic quality remains BLOCKED/NOTMEASURED; overall prototype status is PARTIAL, not production V1 ready. Details: [VALIDATION.md](VALIDATION.md), [KNOWN_LIMITATIONS.md](../KNOWN_LIMITATIONS.md).

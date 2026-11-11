@@ -1,15 +1,13 @@
 """Immutable plans and fail-closed validation shared by review and publication."""
-import hashlib
 import json
-import os
 from pathlib import Path
-from urllib.parse import unquote, urlsplit
 
-from .contracts import (PARSER_VERSION, PROMPT_VERSION, RULES_VERSION, VERSION,
+from .contracts import (EXTRACTION_SCHEMA, PARSER_VERSION, PROMPT_VERSION, RULES_VERSION, VERSION,
                         canonical_json, claim_fingerprint, content_hash, parse_json, stable_id)
 from .evidence import read_snapshot
 from .planner import evidence_manifest, load_documents, policy_gate
 from .storage import Ledger, contains_symlink
+from .sources import SOURCE_POLICY_VERSION, collect_sources
 
 
 class PublicationError(ValueError):
@@ -53,6 +51,10 @@ def load_change_set(db, reference):
     require(config == report['config'] and content_hash(config) == job['config_hash'], 'config_hash_mismatch')
     expected = {'version': VERSION, 'rules': RULES_VERSION, 'parser': PARSER_VERSION,
                 'schema': VERSION, 'prompt': PROMPT_VERSION, 'temperature': 0, 'max_retries': 2}
+    from .context import CONTEXT_VERSION
+    from .llm import SYSTEM_PROMPT, WIRE_VERSION
+    expected.update(context_version=CONTEXT_VERSION, schema_hash=content_hash(EXTRACTION_SCHEMA),
+                    prompt_hash=content_hash(SYSTEM_PROMPT), wire_version=WIRE_VERSION)
     require(all(config.get(k) == v for k, v in expected.items()), 'replan_required')
     require(report['inputs']['collection_id'] == job['collection_id']
             and report['inputs']['vault_id'] == job['vault_id']
@@ -84,58 +86,38 @@ def load_change_set(db, reference):
     return report, job, operations
 
 
-def source_path(uri):
-    parsed = urlsplit(uri)
-    require(parsed.scheme == 'file' and not parsed.netloc and not parsed.query and not parsed.fragment, 'invalid_source_uri')
-    return Path(unquote(parsed.path))
-
-
 def check_sources(db, report, data):
-    """Recheck originals AND immutable snapshots; reject inherited scan omissions.
+    """Reapply the exact scanned eligibility policy, including custom byte limit.
 
-    Directory intake with skipped eligible files is deliberately fail-closed.
-    The scanner's missing-source/hidden-dir gaps cannot publish stale material.
+    Invalid/skipped inputs may remain skipped. Any newly valid, edited, removed
+    or newly ineligible valid input changes the valid manifest and fails closed.
     """
     collection = db.execute('SELECT * FROM collections WHERE id=?', (report['inputs']['collection_id'],)).fetchone()
     require(collection is not None, 'stale_source')
     sources = json.loads(collection['sources_json'])
-    documents = load_documents(db, collection['id'])
+    scan = db.execute('SELECT * FROM collection_scans WHERE collection_id=?', (collection['id'],)).fetchone()
+    require(scan is not None, 'stale_source')
+    policy = json.loads(scan['policy_json'])
+    require(policy == report['config'].get('source_policy')
+            and policy.get('version') == SOURCE_POLICY_VERSION
+            and type(policy.get('max_bytes')) is int and policy['max_bytes'] > 0, 'stale_source')
+    try:
+        documents = load_documents(db, collection['id'])
+    except ValueError:
+        raise PublicationError('stale_source') from None
     actual = [{'document_id': d['document_id'], 'revision_id': d['revision_id'], 'sha256': d['sha256'],
                'locator': d['locator'], 'chunk_ids': [c['id'] for c in d['chunks']]} for d in documents]
     require(actual == report['inputs']['documents'], 'stale_source')
     data = Path(data).absolute()
-    expected_paths = set()
-    root = source_path(sources[0]) if collection['kind'] == 'directory' else None
-    if root:
-        require(not contains_symlink(root) and root.is_dir(), 'stale_source')
-        seen = set()
-        def onerror(error):
-            raise PublicationError('stale_source')
-        for base, dirs, names in os.walk(root, followlinks=False, onerror=onerror):
-            base = Path(base)
-            dirs[:] = sorted(n for n in dirs if not n.startswith('.') and base / n != data and not (base / n).is_symlink())
-            for name in names:
-                path = base / name
-                if path.suffix.lower() in {'.md', '.txt'} and not path.is_symlink():
-                    seen.add(path)
-    else:
-        seen = {source_path(uri) for uri in sources}
+    accepted, _ = collect_sources(collection['kind'], sources, data, policy['max_bytes'])
+    seen = {item['locator']: item for item in accepted}
+    require(set(seen) == {d['locator'] for d in documents}, 'stale_source')
     for document in documents:
-        path = root / document['locator'] if root else source_path(document['locator'])
-        if root:
-            require(not Path(document['locator']).is_absolute() and '..' not in Path(document['locator']).parts
-                    and not any(p.startswith('.') for p in Path(document['locator']).parts[:-1]), 'stale_source')
-        require(path not in expected_paths and not contains_symlink(path) and path.is_file(), 'stale_source')
-        expected_paths.add(path)
-        try:
-            raw = path.read_bytes()
-        except OSError:
-            raise PublicationError('stale_source') from None
-        require(hashlib.sha256(raw).hexdigest() == document['sha256'], 'stale_source')
+        item = seen[document['locator']]
+        require(item['sha256'] == document['sha256'], 'stale_source')
         snapshot = Path(document['snapshot']).absolute()
         require(snapshot.parent == data / 'snapshots' and snapshot.name == document['sha256'], 'invalid_snapshot_path')
-        require(read_snapshot(document) == raw, 'stale_source')
-    require(seen == expected_paths, 'stale_source')
+        read_snapshot(document)  # Independently verifies immutable snapshot bytes/hash.
 
 
 def dependencies(report, operations):

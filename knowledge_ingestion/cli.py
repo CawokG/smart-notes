@@ -86,16 +86,10 @@ def scan(source, data: Path, limit: int = MAX_BYTES) -> dict:
     data = Path(os.path.abspath(data))
     if contains_symlink(data):
         raise ValueError('data path must not contain symlinks')
-    warnings = []
-    valid = []
-    for p in sorted(set(Path(os.path.abspath(p)) for p in sources), key=str):
-        if contains_symlink(p):
-            warnings.append({'path': str(p), 'reason': 'symlink'}); continue
-        if not p.exists():
-            warnings.append({'path': str(p), 'reason': 'not_found'}); continue
-        valid.append(p)
-    directories = [p for p in valid if p.is_dir()]
-    if directories and (len(valid) != 1 or len(sources) != 1):
+    from .sources import (NoUsableSources, SOURCE_POLICY_VERSION, collect_sources)
+    selected = sorted(set(Path(os.path.abspath(p)) for p in sources), key=str)
+    directories = [p for p in selected if not contains_symlink(p) and p.is_dir()]
+    if directories and (len(selected) != 1 or len(sources) != 1):
         raise ValueError('select either one directory or one or more files')
     kind = 'directory' if directories else 'files'
     root = directories[0] if directories else None
@@ -103,29 +97,12 @@ def scan(source, data: Path, limit: int = MAX_BYTES) -> dict:
         raise ValueError('data directory must differ from source directory')
     if (data / 'ledger.sqlite3').is_symlink():
         raise ValueError('ledger path is a symlink')
-    files = []
-    if root:
-        for base, dirs, names in os.walk(root, followlinks=False, onerror=lambda e: warnings.append({'path': str(e.filename), 'reason': 'unreadable'})):
-            base = Path(base)
-            kept = []
-            for name in sorted(dirs):
-                p = base / name
-                if p.is_symlink():
-                    warnings.append({'path': str(p), 'reason': 'symlink'})
-                elif name != '.obsidian' and p != data:
-                    kept.append(name)
-            dirs[:] = kept
-            for name in sorted(names):
-                p = base / name
-                if p.is_symlink():
-                    warnings.append({'path': str(p), 'reason': 'symlink'})
-                elif p.suffix.lower() in ('.md', '.txt'):
-                    files.append(p)
-    else:
-        files = valid
-    file_uris = sorted(p.as_uri() for p in files) if not root else []
-    collection_sources = [root.as_uri()] if root else file_uris
+    # File collection identity describes selection intent, even when an input is
+    # skipped/missing. Ordinary stage1 selections keep exactly the same IDs.
+    collection_sources = [root.as_uri()] if root else [p.as_uri() for p in selected]
     collection_id = stable_id('col', kind, collection_sources)
+    accepted, warnings = collect_sources(kind, collection_sources, data, limit)
+    policy = {'version': SOURCE_POLICY_VERSION, 'max_bytes': limit}
     data.mkdir(parents=True, exist_ok=True)
     snapshots = data / 'snapshots'
     snapshots.mkdir(exist_ok=True)
@@ -138,25 +115,19 @@ def scan(source, data: Path, limit: int = MAX_BYTES) -> dict:
         migrate(db)
         with db:
             db.execute('INSERT OR IGNORE INTO collections VALUES (?,?,?)', (collection_id, kind, json.dumps(collection_sources, ensure_ascii=False)))
-            for p in sorted(files, key=str):
-                locator = p.relative_to(root).as_posix() if root else p.as_uri()
-                if contains_symlink(p) or not p.is_file():
-                    warnings.append({'path': str(p), 'reason': 'symlink_or_nonfile'}); continue
-                if p.suffix.lower() not in ('.md', '.txt'):
-                    warnings.append({'path': str(p), 'reason': 'unsupported_type'}); continue
-                try:
-                    with p.open('rb') as f:
-                        raw = f.read(limit + 1)
-                    if len(raw) > limit:
-                        warnings.append({'path': str(p), 'reason': 'too_large'}); continue
-                    if b'\0' in raw:
-                        raise ValueError('binary')
-                    raw.decode('utf-8')
-                except (UnicodeDecodeError, ValueError):
-                    warnings.append({'path': str(p), 'reason': 'invalid_utf8_or_binary'}); continue
-                except OSError:
-                    warnings.append({'path': str(p), 'reason': 'unreadable'}); continue
-                digest = hashlib.sha256(raw).hexdigest()
+            db.execute('DELETE FROM scan_membership WHERE collection_id=?', (collection_id,))
+            db.execute('INSERT OR REPLACE INTO collection_scans VALUES (?,?,?)',
+                       (collection_id, json.dumps(policy, sort_keys=True), json.dumps(warnings, ensure_ascii=False)))
+            for item in accepted:
+                digest, locator = item['sha256'], item['locator']
+                # Keep at most one document's bytes in memory. Recheck the hash
+                # after eligibility discovery; a racing edit aborts the scan.
+                if contains_symlink(item['path']):
+                    raise ValueError('source_changed_during_scan')
+                with item['path'].open('rb') as stream:
+                    raw = stream.read(limit + 1)
+                if hashlib.sha256(raw).hexdigest() != digest:
+                    raise ValueError('source_changed_during_scan')
                 snap = snapshots / digest
                 if snap.is_symlink():
                     raise ValueError('snapshot path is a symlink')
@@ -173,11 +144,27 @@ def scan(source, data: Path, limit: int = MAX_BYTES) -> dict:
                 if inserted:
                     db.execute('INSERT INTO revision_metadata VALUES (?,?)', (rev_id, now()))
                 db.execute('UPDATE documents SET last_revision_id=? WHERE id=?', (rev_id, doc_id))
+                db.execute('INSERT INTO scan_membership VALUES (?,?,?)', (collection_id, doc_id, rev_id))
                 for c in chunks:
                     overlap = c['overlap_range'] or [None, None]
                     db.execute('INSERT OR IGNORE INTO chunks VALUES (?,?,?,?,?,?,?,?)', (c['chunk_id'], rev_id, c['ordinal'], c['start_byte'], c['end_byte'], json.dumps(c['heading_path'], ensure_ascii=False), *overlap))
                 docs.append({'path': locator, 'document_id': doc_id, 'revision_id': rev_id, 'sha256': digest, 'snapshot': str(snap), 'chunks': chunks})
-    return {'version': '2.0', 'schema_version': SCHEMA_VERSION, 'parser_version': PARSER_VERSION, 'collection_id': collection_id, 'source_kind': kind, 'root_uri': root.as_uri() if root else None, 'documents': docs, 'warnings': sorted(warnings, key=lambda w: (w['path'], w['reason']))}
+            for row in db.execute('''SELECT DISTINCT ce.claim_id,e.revision_id,d.locator
+                FROM claim_evidence ce JOIN evidence e ON e.id=ce.evidence_id
+                JOIN source_revisions r ON r.id=e.revision_id JOIN documents d ON d.id=r.document_id
+                LEFT JOIN scan_membership s ON s.document_id=d.id AND s.collection_id=d.collection_id
+                WHERE d.collection_id=? AND s.document_id IS NULL ORDER BY ce.claim_id,e.revision_id''', (collection_id,)):
+                warnings.append({'reason': 'possibly_stale_source', 'claim_id': row[0],
+                                 'previous_revision_id': row[1], 'path': row[2]})
+    result = {'version': '2.0', 'schema_version': SCHEMA_VERSION, 'parser_version': PARSER_VERSION,
+              'collection_id': collection_id, 'source_kind': kind, 'root_uri': root.as_uri() if root else None,
+              'source_policy': policy, 'documents': docs,
+              'warnings': sorted(warnings, key=lambda w: (w['path'], w['reason']))}
+    if not docs:
+        # Membership was deliberately updated to empty, so no old material can
+        # reappear in a plan after a failed all-invalid rescan.
+        raise NoUsableSources(result)
+    return result
 
 
 def backend_options(parser):
@@ -201,6 +188,32 @@ def configured_backend(args, vault):
                          os.environ.get(args.full_token_env))
 
 
+def llm_options(parser):
+    parser.add_argument('--llm-provider', choices=['fake', 'openai-compatible'], default='fake')
+    parser.add_argument('--fixture', type=Path, help='required only for the scripted fake provider')
+    parser.add_argument('--llm-base-url', help='explicit API root, e.g. https://api.openai.com/v1')
+    parser.add_argument('--llm-model')
+    parser.add_argument('--llm-api-key-env', help='environment variable NAME; never a key value')
+    parser.add_argument('--llm-local', action='store_true', help='explicit loopback endpoint; permits HTTP/no API key')
+    parser.add_argument('--llm-timeout', type=float, default=30)
+
+
+def configured_llm(args):
+    from .llm import FakeLLM, OpenAICompatibleLLM
+    if args.llm_provider == 'fake':
+        if any((args.llm_base_url, args.llm_model, args.llm_api_key_env, args.llm_local)):
+            raise ValueError('real_llm_options_require_explicit_openai_compatible_provider')
+        if args.fixture is None:
+            raise ValueError('fake_provider_requires_fixture')
+        return FakeLLM(args.fixture)
+    if args.fixture is not None:
+        raise ValueError('fixture_requires_fake_provider')
+    if not args.llm_base_url or not args.llm_model:
+        raise ValueError('real_llm_requires_explicit_base_url_and_model')
+    return OpenAICompatibleLLM(args.llm_base_url, args.llm_model, args.llm_api_key_env,
+                               local=args.llm_local, timeout=args.llm_timeout)
+
+
 def main():
     parser = argparse.ArgumentParser(prog='ki')
     sub = parser.add_subparsers(dest='command', required=True)
@@ -212,9 +225,10 @@ def main():
     p.add_argument('--collection', required=True)
     p.add_argument('--data', type=Path, default=Path('data'))
     p.add_argument('--vault', default='personal')
-    p.add_argument('--llm-provider', choices=['fake'], default='fake')
-    p.add_argument('--fixture', type=Path, required=True)
+    llm_options(p)
     p.add_argument('--digest-bytes', type=int, default=4096)
+    p.add_argument('--request-bytes', type=int, default=65536,
+                   help='maximum complete serialized LLM request bytes, including schema and context')
     p.add_argument('--output', type=Path)
     p.add_argument('--context', choices=['offline', 'muninn-observe'], default='offline')
     p.add_argument('--muninn-url', default='http://127.0.0.1:8475')
@@ -234,10 +248,10 @@ def main():
     t = sub.add_parser('status')
     t.add_argument('--job', required=True)
     t.add_argument('--data', type=Path, default=Path('data'))
-    u = sub.add_parser('resume', help='continue original fake planning or a confirmed commit')
+    u = sub.add_parser('resume', help='continue original provider planning or a confirmed commit')
     u.add_argument('--job', required=True)
     u.add_argument('--data', type=Path, default=Path('data'))
-    u.add_argument('--fixture', type=Path, help='original fake fixture for interrupted planning')
+    llm_options(u)
     u.add_argument('--context', choices=['offline', 'muninn-observe'], default='offline')
     u.add_argument('--expected-config-hash')
     u.add_argument('--repair-operation')
@@ -250,16 +264,17 @@ def main():
         if args.command == 'scan':
             result = scan(args.source, args.data, args.max_bytes)
         elif args.command == 'plan':
-            from .llm import FakeLLM
             from .planner import plan
+            provider = configured_llm(args)
             context = None
             if args.context == 'muninn-observe':
                 from .context import ObserveContextProvider
                 from .muninn import MuninnAdapter
                 context = ObserveContextProvider(MuninnAdapter(args.muninn_url, args.vault,
                     os.environ.get(args.observe_token_env)))
-            result = plan(args.collection, args.data, FakeLLM(args.fixture), vault=args.vault,
-                          digest_budget=args.digest_bytes, context_provider=context)
+            result = plan(args.collection, args.data, provider, vault=args.vault,
+                          digest_budget=args.digest_bytes, context_provider=context,
+                          request_budget=args.request_bytes)
             if args.output:
                 if contains_symlink(args.output):
                     raise ValueError('output path must not contain symlinks')
@@ -304,7 +319,6 @@ def main():
                         raise ValueError('manual_repair_requires_operation_id_engram_id_actor_rationale')
                     repair = {'operation_id': args.repair_operation, 'engram_id': args.engram_id,
                               'actor': args.actor, 'rationale': args.rationale}
-                from .llm import FakeLLM
                 context = None
                 if not is_commit and args.context == 'muninn-observe':
                     from .context import ObserveContextProvider
@@ -313,13 +327,17 @@ def main():
                         os.environ.get(args.observe_token_env)))
                 result = resume_job(args.data, args.job,
                     adapter=configured_backend(args, job['vault_id']) if is_commit else None,
-                    provider=FakeLLM(args.fixture) if args.fixture else None,
+                    provider=configured_llm(args) if not is_commit else None,
                     context_provider=context,
                     expected_config_hash=args.expected_config_hash, repair=repair)
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
         if result.get('status') in {'needs_attention', 'needs_manual_repair', 'blocked_backend', 'replan_required', 'stale_source'}:
             return 1
     except (OSError, ValueError, sqlite3.Error) as exc:
+        from .sources import NoUsableSources
+        if isinstance(exc, NoUsableSources):
+            print(json.dumps({'error': 'no_usable_sources', **exc.result}, ensure_ascii=False), file=sys.stderr)
+            return 1
         # Application exceptions use fixed codes; no raw backend body is exposed.
         print(json.dumps({'error': str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 1

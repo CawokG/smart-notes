@@ -1,0 +1,1611 @@
+{
+  "aliases": [
+    {
+      "candidate_entity_ids": [],
+      "entity_id": "ent_26371b94f4f70a214e1883ae2030a4683d65a7fbb7c205e55e6dbbbd8e4ea790",
+      "evidence_ids": [
+        "ev_6d6193ac4c19723cab58a6576dfb8b9740f3b580ceb12fa13d60c88b26997a67"
+      ],
+      "id": "als_35ce431e20bca970c1ddf21342cc2fbf471274b9a9be1a8024939d48f5555f9b",
+      "kind": "nickname",
+      "normalized_value": "лёша",
+      "scope": "local",
+      "state": "staged",
+      "status": "approved",
+      "value": "Лёша",
+      "version": "1.0"
+    },
+    {
+      "candidate_entity_ids": [],
+      "entity_id": "ent_26371b94f4f70a214e1883ae2030a4683d65a7fbb7c205e55e6dbbbd8e4ea790",
+      "evidence_ids": [
+        "ev_6d6193ac4c19723cab58a6576dfb8b9740f3b580ceb12fa13d60c88b26997a67"
+      ],
+      "id": "als_baba5c7f1f07ffc937d903ea74d0910b567b321b98df98f016eb03091f49396d",
+      "kind": "handle",
+      "normalized_value": "@alex_design",
+      "scope": "service:github",
+      "state": "staged",
+      "status": "approved",
+      "value": "@alex_design",
+      "version": "1.0"
+    },
+    {
+      "candidate_entity_ids": [],
+      "entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3",
+      "evidence_ids": [
+        "ev_46fb5c9e6cf1a5cd05c2c39b93dd967f4246c97ba4a189bddddf896a4d900262"
+      ],
+      "id": "als_da4c0cd8c599bd6331b04ce39cf0278f95645aeb9d2adad11a5a0281e0a63825",
+      "kind": "nickname",
+      "normalized_value": "макс",
+      "scope": "local",
+      "state": "staged",
+      "status": "approved",
+      "value": "Макс",
+      "version": "1.0"
+    },
+    {
+      "candidate_entity_ids": [],
+      "entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3",
+      "evidence_ids": [
+        "ev_46fb5c9e6cf1a5cd05c2c39b93dd967f4246c97ba4a189bddddf896a4d900262"
+      ],
+      "id": "als_f87026bb3f8e1a2280d4872ed24e506de25ffa3e959313110e8b05928beac029",
+      "kind": "handle",
+      "normalized_value": "@max_dev",
+      "scope": "service:github",
+      "state": "staged",
+      "status": "approved",
+      "value": "@max_dev",
+      "version": "1.0"
+    }
+  ],
+  "base_revision": "ledger_f339cb86f15d5b37e6d883ffb627a94b9e7391c354e014b66547cb0cc079df4a",
+  "change_set_id": "chg_31edd0661253aedb46b9e648588f60a83f3ed15fdfeb406424bab5ecb5899ef1",
+  "claims": [
+    {
+      "canonical_hash": "30f3611441df865e1aec7e770dee8e182b3035366418434202d138b12cf3ce68",
+      "claim_id": "clm_45f753f1788d8b99d1886d7cd03d9cd92444912cf8bcdc6d3203551cb27e27d9",
+      "evidence_ids": [
+        "ev_bae6804ae3aed3088e817c610dd3a5a2ac1bca051224237400ef8ce9d3ad8391",
+        "ev_cfc5dde2e30e8aecbaf776b58c12e0d82397f0fed172eac51e94376547fc2ca7"
+      ],
+      "extraction": {
+        "confidence_raw": 0.99,
+        "fixture_hash": "095ecb44616d0f73a86e96e765b89113820df39d706358ba9edfa4c27a159ce1",
+        "model": "scripted-fixture-1",
+        "prompt": "evidence-first-1",
+        "provider": "fake",
+        "schema": "1.0"
+      },
+      "modality": "asserted",
+      "object": {
+        "entity_id": "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902",
+        "kind": "entity"
+      },
+      "polarity": "positive",
+      "predicate": "works_on",
+      "qualifiers": {},
+      "reason_codes": [],
+      "recorded_at": null,
+      "reported_by": null,
+      "state": "proposed",
+      "subject": {
+        "entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3"
+      },
+      "valid_time": {
+        "from": null,
+        "precision": "unknown",
+        "temporal_expression": null,
+        "to": null
+      },
+      "vault_id": "personal",
+      "version": "1.0"
+    },
+    {
+      "canonical_hash": "1ff3f1fe71a8bb2b1e75ed156d993dbe73260eacd35d3994a2976ef14a482102",
+      "claim_id": "clm_715f40a4c0d0226defb529ee3c4e8f3259e7830e49f0cae211e10c9ada4f53bf",
+      "evidence_ids": [
+        "ev_d1d7ff03ddf9eb826692fa05566d09a7f9b625866eb084538eb041e41f37d3f5"
+      ],
+      "extraction": {
+        "confidence_raw": 0.99,
+        "fixture_hash": "095ecb44616d0f73a86e96e765b89113820df39d706358ba9edfa4c27a159ce1",
+        "model": "scripted-fixture-1",
+        "prompt": "evidence-first-1",
+        "provider": "fake",
+        "schema": "1.0"
+      },
+      "modality": "asserted",
+      "object": {
+        "kind": "literal",
+        "value": "active"
+      },
+      "polarity": "positive",
+      "predicate": "has_status",
+      "qualifiers": {},
+      "reason_codes": [
+        "conflict_requires_review"
+      ],
+      "recorded_at": null,
+      "reported_by": null,
+      "state": "deferred",
+      "subject": {
+        "entity_id": "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902"
+      },
+      "valid_time": {
+        "from": "2026-11-10",
+        "precision": "day",
+        "temporal_expression": null,
+        "to": "2026-11-10"
+      },
+      "vault_id": "personal",
+      "version": "1.0"
+    },
+    {
+      "canonical_hash": "f9d18d93b0c73325b7c4c777b4f373262adc77198a45c41b99301d360e51e99f",
+      "claim_id": "clm_d115cb71b0ff8adeda257b06d12600e6cc54d41db4c81cb5aaeb0f9397fccfdc",
+      "evidence_ids": [
+        "ev_7110513c7fb5d0c47cd948af3682f2916a751464d366ee21c727fbc8f1028de3"
+      ],
+      "extraction": {
+        "confidence_raw": 0.99,
+        "fixture_hash": "095ecb44616d0f73a86e96e765b89113820df39d706358ba9edfa4c27a159ce1",
+        "model": "scripted-fixture-1",
+        "prompt": "evidence-first-1",
+        "provider": "fake",
+        "schema": "1.0"
+      },
+      "modality": "asserted",
+      "object": {
+        "entity_id": "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902",
+        "kind": "entity"
+      },
+      "polarity": "positive",
+      "predicate": "works_on",
+      "qualifiers": {},
+      "reason_codes": [],
+      "recorded_at": null,
+      "reported_by": null,
+      "state": "proposed",
+      "subject": {
+        "entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3"
+      },
+      "valid_time": {
+        "from": "2024",
+        "precision": "year",
+        "temporal_expression": null,
+        "to": "2024"
+      },
+      "vault_id": "personal",
+      "version": "1.0"
+    },
+    {
+      "canonical_hash": "55a9e22c55e7eb65aade48ba5f76b302307f9922a84c42c96d5ff9771371cf67",
+      "claim_id": "clm_deferred_22a8a0ec498a17faf07dbea6349458f29cc77316fca2356a898ea56b8a80b32d",
+      "evidence_ids": [
+        "ev_b92d03dbc9b0c4ec6514f3abc3c616ca32b9bdf89d5720d2e0f6111b6fe11fd0"
+      ],
+      "extraction": {
+        "confidence_raw": 0.99,
+        "fixture_hash": "095ecb44616d0f73a86e96e765b89113820df39d706358ba9edfa4c27a159ce1",
+        "model": "scripted-fixture-1",
+        "prompt": "evidence-first-1",
+        "provider": "fake",
+        "schema": "1.0"
+      },
+      "modality": "planned",
+      "object": {
+        "kind": "literal",
+        "value": "SQLite"
+      },
+      "polarity": "positive",
+      "predicate": "uses",
+      "qualifiers": {},
+      "reason_codes": [
+        "modality_planned"
+      ],
+      "recorded_at": null,
+      "reported_by": null,
+      "state": "deferred",
+      "subject": {
+        "entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3"
+      },
+      "valid_time": {
+        "from": null,
+        "precision": "unknown",
+        "temporal_expression": null,
+        "to": null
+      },
+      "vault_id": "personal",
+      "version": "1.0"
+    },
+    {
+      "canonical_hash": "96bc69a70731eff15355f1a6e7fd9cdb6a1e9636ea2b90b0d28fd6417007f8dd",
+      "claim_id": "clm_deferred_4b8534af2c48de67be023bb88ef8149295ae8c8896a77d7486e6951e64203f92",
+      "evidence_ids": [
+        "ev_3c7411d484a1fb4bdba7ff71d8a5d178a78e3c1316a6f3949acdc2d4c62df6b4"
+      ],
+      "extraction": {
+        "confidence_raw": 0.99,
+        "fixture_hash": "095ecb44616d0f73a86e96e765b89113820df39d706358ba9edfa4c27a159ce1",
+        "model": "scripted-fixture-1",
+        "prompt": "evidence-first-1",
+        "provider": "fake",
+        "schema": "1.0"
+      },
+      "modality": "asserted",
+      "object": {
+        "kind": "literal",
+        "value": "paused"
+      },
+      "polarity": "positive",
+      "predicate": "has_status",
+      "qualifiers": {},
+      "reason_codes": [
+        "conflict_requires_review",
+        "single_value_conflict"
+      ],
+      "recorded_at": null,
+      "reported_by": null,
+      "state": "deferred",
+      "subject": {
+        "entity_id": "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902"
+      },
+      "valid_time": {
+        "from": "2026-11-10",
+        "precision": "day",
+        "temporal_expression": null,
+        "to": "2026-11-10"
+      },
+      "vault_id": "personal",
+      "version": "1.0"
+    },
+    {
+      "canonical_hash": "77a7cfcff160a524cb2ace7a203bc91dd77f1a5685069914c410b46d1930f344",
+      "claim_id": "clm_deferred_abd401c63fba5f87b97ba1bdc22dfbdcb5a2758cb8e224f561c9f5d1ce16136b",
+      "evidence_ids": [
+        "ev_d34f769bf29fd6b6ee4a0e8c87bf0d8f0a1381f9734946410a9447b48dcc4e5b"
+      ],
+      "extraction": {
+        "confidence_raw": 0.99,
+        "fixture_hash": "095ecb44616d0f73a86e96e765b89113820df39d706358ba9edfa4c27a159ce1",
+        "model": "scripted-fixture-1",
+        "prompt": "evidence-first-1",
+        "provider": "fake",
+        "schema": "1.0"
+      },
+      "modality": "reported",
+      "object": {
+        "kind": "literal",
+        "value": "Python"
+      },
+      "polarity": "positive",
+      "predicate": "uses",
+      "qualifiers": {},
+      "reason_codes": [
+        "modality_reported",
+        "non_direct_claim_evidence"
+      ],
+      "recorded_at": null,
+      "reported_by": null,
+      "state": "deferred",
+      "subject": {
+        "entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3"
+      },
+      "valid_time": {
+        "from": null,
+        "precision": "unknown",
+        "temporal_expression": null,
+        "to": null
+      },
+      "vault_id": "personal",
+      "version": "1.0"
+    },
+    {
+      "canonical_hash": "7ff717e84e7eb946be300b0cf3415835955cd8e2c409afc23014309bf71d7ced",
+      "claim_id": "clm_deferred_e1bd1081bea69afc35e1e9ff0a03b3e401c0246af6326f9f882472971aa4a9f3",
+      "evidence_ids": [
+        "ev_a4ef9fc9ba7f1656b6ccaa2dff1fc3c09bdb5aa7e732185e2af6f21a8dc9d5ad"
+      ],
+      "extraction": {
+        "confidence_raw": 0.99,
+        "fixture_hash": "095ecb44616d0f73a86e96e765b89113820df39d706358ba9edfa4c27a159ce1",
+        "model": "scripted-fixture-1",
+        "prompt": "evidence-first-1",
+        "provider": "fake",
+        "schema": "1.0"
+      },
+      "modality": "asserted",
+      "object": {
+        "entity_id": "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902",
+        "kind": "entity"
+      },
+      "polarity": "negative",
+      "predicate": "works_on",
+      "qualifiers": {},
+      "reason_codes": [
+        "unresolved_temporal_reference"
+      ],
+      "recorded_at": null,
+      "reported_by": null,
+      "state": "deferred",
+      "subject": {
+        "entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3"
+      },
+      "valid_time": {
+        "from": null,
+        "precision": "unresolved",
+        "temporal_expression": "Сейчас",
+        "to": null
+      },
+      "vault_id": "personal",
+      "version": "1.0"
+    },
+    {
+      "canonical_hash": null,
+      "claim_id": "clm_deferred_e7b625e39041db2db69d24a5045f959f813ea39686b650048bf48ee5b4857020",
+      "evidence_ids": [
+        "ev_3f07bd9bbef597259e531e1f5c0e062dc91c309a77266ea7fae75eacc89807f3"
+      ],
+      "extraction": {
+        "confidence_raw": 0.99,
+        "fixture_hash": "095ecb44616d0f73a86e96e765b89113820df39d706358ba9edfa4c27a159ce1",
+        "model": "scripted-fixture-1",
+        "prompt": "evidence-first-1",
+        "provider": "fake",
+        "schema": "1.0"
+      },
+      "modality": "hypothetical",
+      "object": {
+        "entity_id": null,
+        "kind": "entity"
+      },
+      "polarity": "positive",
+      "predicate": "knows",
+      "qualifiers": {},
+      "reason_codes": [
+        "modality_hypothetical",
+        "unresolved_object"
+      ],
+      "recorded_at": null,
+      "reported_by": null,
+      "state": "deferred",
+      "subject": {
+        "entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3"
+      },
+      "valid_time": {
+        "from": null,
+        "precision": "unknown",
+        "temporal_expression": null,
+        "to": null
+      },
+      "vault_id": "personal",
+      "version": "1.0"
+    },
+    {
+      "canonical_hash": "428ca82f4ead1d3eaa05ae7e09961554bdcef619997e1a821f078c78f4d70be5",
+      "claim_id": "clm_deferred_ffcb5a6d092a2fce6d6c74fbe0b91e6e2ee259888c40e1fea23b58f776df9f15",
+      "evidence_ids": [
+        "ev_913306e44f5f623d86d1ed30474c70bba0301d4a5a6fd566b7b389388b8dcbf4"
+      ],
+      "extraction": {
+        "confidence_raw": 0.99,
+        "fixture_hash": "095ecb44616d0f73a86e96e765b89113820df39d706358ba9edfa4c27a159ce1",
+        "model": "scripted-fixture-1",
+        "prompt": "evidence-first-1",
+        "provider": "fake",
+        "schema": "1.0"
+      },
+      "modality": "question",
+      "object": {
+        "entity_id": "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902",
+        "kind": "entity"
+      },
+      "polarity": "positive",
+      "predicate": "works_on",
+      "qualifiers": {},
+      "reason_codes": [
+        "modality_question"
+      ],
+      "recorded_at": null,
+      "reported_by": null,
+      "state": "deferred",
+      "subject": {
+        "entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3"
+      },
+      "valid_time": {
+        "from": null,
+        "precision": "unknown",
+        "temporal_expression": null,
+        "to": null
+      },
+      "vault_id": "personal",
+      "version": "1.0"
+    }
+  ],
+  "config": {
+    "context_mode": "offline_ledger_only",
+    "context_version": "bounded-context-1",
+    "digest_budget_bytes": 4096,
+    "external_candidates_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "llm": {
+      "fixture_hash": "095ecb44616d0f73a86e96e765b89113820df39d706358ba9edfa4c27a159ce1",
+      "model": "scripted-fixture-1",
+      "provider": "fake"
+    },
+    "max_retries": 2,
+    "parser": "1",
+    "prompt": "evidence-first-1",
+    "prompt_hash": "6afed33ffeb4d683f4a66d4fc2c07a34fe6202966f0913fa479eb88760c35dee",
+    "request_budget_bytes": 65536,
+    "rules": "offline-1",
+    "schema": "1.0",
+    "schema_hash": "ac7dca7eb5c53a3cb1236efbf3fbeb5d8c241ee05002a0dba32527661155b50f",
+    "source_policy": {
+      "max_bytes": 5242880,
+      "version": "source-intake-1"
+    },
+    "temperature": 0,
+    "version": "1.0",
+    "wire_version": "openai-chat-json-1"
+  },
+  "entities": [
+    {
+      "canonical_name": "Atlas",
+      "evidence_ids": [
+        "ev_f64698066104d6917c64262fef2d425cc798211bee54ce18c1aa88c00c17979f"
+      ],
+      "id": "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902",
+      "origin_document_id": "doc_858d6bdcda65d016bffc9c52008ba0c75c5092511e4cde33709e6d22cc9cdaa9",
+      "state": "staged",
+      "type": "project",
+      "type_label": null,
+      "vault_id": "personal",
+      "version": "1.0"
+    },
+    {
+      "canonical_name": "Алексей",
+      "evidence_ids": [
+        "ev_0e1a5505572759c270bae2be7f1a8785c12448a33c14fb383a27ce404226ad25"
+      ],
+      "id": "ent_26371b94f4f70a214e1883ae2030a4683d65a7fbb7c205e55e6dbbbd8e4ea790",
+      "origin_document_id": "doc_04c493ecfc5dbc331dcdbfe6081c88597cbaa11f23595b390eac20a6b550ef2b",
+      "state": "staged",
+      "type": "person",
+      "type_label": null,
+      "vault_id": "personal",
+      "version": "1.0"
+    },
+    {
+      "canonical_name": "Максим",
+      "evidence_ids": [
+        "ev_8f8ab840b2183ef19b5d113bfeb31a3462e4617ee188c7df9889226d818d5ef6"
+      ],
+      "id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3",
+      "origin_document_id": "doc_858d6bdcda65d016bffc9c52008ba0c75c5092511e4cde33709e6d22cc9cdaa9",
+      "state": "staged",
+      "type": "person",
+      "type_label": null,
+      "vault_id": "personal",
+      "version": "1.0"
+    },
+    {
+      "canonical_name": "Алексей",
+      "evidence_ids": [
+        "ev_a6126ff7b46c5f172c5dfc2b9560b2ed13b43541e622238f88d537d1bfdcd52f"
+      ],
+      "id": "ent_d72880cc71cc8a9125a154946fb4898cde64feb53775d8461c767a968d5a6b09",
+      "origin_document_id": "doc_4188cf22b2ef7ac01382e16ab1ecbcb6490f134889ed310af42954cfb83fe018",
+      "state": "staged",
+      "type": "person",
+      "type_label": null,
+      "vault_id": "personal",
+      "version": "1.0"
+    }
+  ],
+  "error": null,
+  "evidence": [
+    {
+      "document_id": "doc_04c493ecfc5dbc331dcdbfe6081c88597cbaa11f23595b390eac20a6b550ef2b",
+      "end_byte": 53,
+      "id": "ev_0e1a5505572759c270bae2be7f1a8785c12448a33c14fb383a27ce404226ad25",
+      "locator": "People/Alexey.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Алексей — дизайнер.",
+      "revision_id": "rev_b31ed2c119a687f8e7c94d8c5ac2d8658332eb64a6b9194afc4beb165d5fe568",
+      "sha256": "2f428660493d4ad473b5baf493e8e4d320322e8f7c93700171e89411b668c3b2",
+      "source_role": "direct",
+      "start_byte": 17,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_4188cf22b2ef7ac01382e16ab1ecbcb6490f134889ed310af42954cfb83fe018",
+      "end_byte": 361,
+      "id": "ev_3c7411d484a1fb4bdba7ff71d8a5d178a78e3c1316a6f3949acdc2d4c62df6b4",
+      "locator": "Projects/Atlas.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "На 2026-11-10 Atlas имеет статус paused.",
+      "revision_id": "rev_174bc68987545485e45164ffaf6ac11fd580af00a68de06383b6c4b25c2e1ec3",
+      "sha256": "47f29bcc9a44c63fb6f0aac0ae76d748ccd2e00000c8d337ddd3d60eb5de7b8c",
+      "source_role": "direct",
+      "start_byte": 308,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_858d6bdcda65d016bffc9c52008ba0c75c5092511e4cde33709e6d22cc9cdaa9",
+      "end_byte": 560,
+      "id": "ev_3f07bd9bbef597259e531e1f5c0e062dc91c309a77266ea7fae75eacc89807f3",
+      "locator": "People/Max.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Возможно, Максим знаком с человеком по имени Алексей.",
+      "revision_id": "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296",
+      "sha256": "ce1b162832a59b31a738f0cc1041be78a2c079cd43224df68a39f7fb768eb0bd",
+      "source_role": "direct",
+      "start_byte": 463,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_858d6bdcda65d016bffc9c52008ba0c75c5092511e4cde33709e6d22cc9cdaa9",
+      "end_byte": 233,
+      "id": "ev_46fb5c9e6cf1a5cd05c2c39b93dd967f4246c97ba4a189bddddf896a4d900262",
+      "locator": "People/Max.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Максим, также известный как Макс, использует ник @max_dev в GitHub.",
+      "revision_id": "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296",
+      "sha256": "ce1b162832a59b31a738f0cc1041be78a2c079cd43224df68a39f7fb768eb0bd",
+      "source_role": "direct",
+      "start_byte": 125,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_04c493ecfc5dbc331dcdbfe6081c88597cbaa11f23595b390eac20a6b550ef2b",
+      "end_byte": 168,
+      "id": "ev_6d6193ac4c19723cab58a6576dfb8b9740f3b580ceb12fa13d60c88b26997a67",
+      "locator": "People/Alexey.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Алексей, также известный как Лёша, использует ник @alex_design в GitHub.",
+      "revision_id": "rev_b31ed2c119a687f8e7c94d8c5ac2d8658332eb64a6b9194afc4beb165d5fe568",
+      "sha256": "2f428660493d4ad473b5baf493e8e4d320322e8f7c93700171e89411b668c3b2",
+      "source_role": "direct",
+      "start_byte": 54,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_858d6bdcda65d016bffc9c52008ba0c75c5092511e4cde33709e6d22cc9cdaa9",
+      "end_byte": 791,
+      "id": "ev_7110513c7fb5d0c47cd948af3682f2916a751464d366ee21c727fbc8f1028de3",
+      "locator": "People/Max.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "В 2024 году Максим работал над Atlas.",
+      "revision_id": "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296",
+      "sha256": "ce1b162832a59b31a738f0cc1041be78a2c079cd43224df68a39f7fb768eb0bd",
+      "source_role": "direct",
+      "start_byte": 733,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_858d6bdcda65d016bffc9c52008ba0c75c5092511e4cde33709e6d22cc9cdaa9",
+      "end_byte": 124,
+      "id": "ev_8f8ab840b2183ef19b5d113bfeb31a3462e4617ee188c7df9889226d818d5ef6",
+      "locator": "People/Max.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Максим — разработчик.",
+      "revision_id": "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296",
+      "sha256": "ce1b162832a59b31a738f0cc1041be78a2c079cd43224df68a39f7fb768eb0bd",
+      "source_role": "direct",
+      "start_byte": 84,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_858d6bdcda65d016bffc9c52008ba0c75c5092511e4cde33709e6d22cc9cdaa9",
+      "end_byte": 732,
+      "id": "ev_913306e44f5f623d86d1ed30474c70bba0301d4a5a6fd566b7b389388b8dcbf4",
+      "locator": "People/Max.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Работает ли Максим над Atlas?",
+      "revision_id": "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296",
+      "sha256": "ce1b162832a59b31a738f0cc1041be78a2c079cd43224df68a39f7fb768eb0bd",
+      "source_role": "direct",
+      "start_byte": 684,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_4188cf22b2ef7ac01382e16ab1ecbcb6490f134889ed310af42954cfb83fe018",
+      "end_byte": 148,
+      "id": "ev_9bdbf72678df5845928fc66ed67ebe099702817d386b7aa2e7a3531e0d89ae3d",
+      "locator": "Projects/Atlas.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Atlas — проект импорта знаний.",
+      "revision_id": "rev_174bc68987545485e45164ffaf6ac11fd580af00a68de06383b6c4b25c2e1ec3",
+      "sha256": "47f29bcc9a44c63fb6f0aac0ae76d748ccd2e00000c8d337ddd3d60eb5de7b8c",
+      "source_role": "direct",
+      "start_byte": 97,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_858d6bdcda65d016bffc9c52008ba0c75c5092511e4cde33709e6d22cc9cdaa9",
+      "end_byte": 853,
+      "id": "ev_a4ef9fc9ba7f1656b6ccaa2dff1fc3c09bdb5aa7e732185e2af6f21a8dc9d5ad",
+      "locator": "People/Max.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Сейчас Максим не работает над Atlas.",
+      "revision_id": "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296",
+      "sha256": "ce1b162832a59b31a738f0cc1041be78a2c079cd43224df68a39f7fb768eb0bd",
+      "source_role": "direct",
+      "start_byte": 792,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_4188cf22b2ef7ac01382e16ab1ecbcb6490f134889ed310af42954cfb83fe018",
+      "end_byte": 96,
+      "id": "ev_a6126ff7b46c5f172c5dfc2b9560b2ed13b43541e622238f88d537d1bfdcd52f",
+      "locator": "Projects/Atlas.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Алексей — другой человек, руководитель проекта.",
+      "revision_id": "rev_174bc68987545485e45164ffaf6ac11fd580af00a68de06383b6c4b25c2e1ec3",
+      "sha256": "47f29bcc9a44c63fb6f0aac0ae76d748ccd2e00000c8d337ddd3d60eb5de7b8c",
+      "source_role": "direct",
+      "start_byte": 8,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_858d6bdcda65d016bffc9c52008ba0c75c5092511e4cde33709e6d22cc9cdaa9",
+      "end_byte": 625,
+      "id": "ev_b92d03dbc9b0c4ec6514f3abc3c616ca32b9bdf89d5720d2e0f6111b6fe11fd0",
+      "locator": "People/Max.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Максим планирует использовать SQLite.",
+      "revision_id": "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296",
+      "sha256": "ce1b162832a59b31a738f0cc1041be78a2c079cd43224df68a39f7fb768eb0bd",
+      "source_role": "direct",
+      "start_byte": 561,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_4188cf22b2ef7ac01382e16ab1ecbcb6490f134889ed310af42954cfb83fe018",
+      "end_byte": 253,
+      "id": "ev_bae6804ae3aed3088e817c610dd3a5a2ac1bca051224237400ef8ce9d3ad8391",
+      "locator": "Projects/Atlas.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Максим работает над Atlas.",
+      "revision_id": "rev_174bc68987545485e45164ffaf6ac11fd580af00a68de06383b6c4b25c2e1ec3",
+      "sha256": "47f29bcc9a44c63fb6f0aac0ae76d748ccd2e00000c8d337ddd3d60eb5de7b8c",
+      "source_role": "direct",
+      "start_byte": 210,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_858d6bdcda65d016bffc9c52008ba0c75c5092511e4cde33709e6d22cc9cdaa9",
+      "end_byte": 329,
+      "id": "ev_cfc5dde2e30e8aecbaf776b58c12e0d82397f0fed172eac51e94376547fc2ca7",
+      "locator": "People/Max.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Максим работает над Atlas.",
+      "revision_id": "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296",
+      "sha256": "ce1b162832a59b31a738f0cc1041be78a2c079cd43224df68a39f7fb768eb0bd",
+      "source_role": "direct",
+      "start_byte": 286,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_4188cf22b2ef7ac01382e16ab1ecbcb6490f134889ed310af42954cfb83fe018",
+      "end_byte": 307,
+      "id": "ev_d1d7ff03ddf9eb826692fa05566d09a7f9b625866eb084538eb041e41f37d3f5",
+      "locator": "Projects/Atlas.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "На 2026-11-10 Atlas имеет статус active.",
+      "revision_id": "rev_174bc68987545485e45164ffaf6ac11fd580af00a68de06383b6c4b25c2e1ec3",
+      "sha256": "47f29bcc9a44c63fb6f0aac0ae76d748ccd2e00000c8d337ddd3d60eb5de7b8c",
+      "source_role": "direct",
+      "start_byte": 254,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_858d6bdcda65d016bffc9c52008ba0c75c5092511e4cde33709e6d22cc9cdaa9",
+      "end_byte": 683,
+      "id": "ev_d34f769bf29fd6b6ee4a0e8c87bf0d8f0a1381f9734946410a9447b48dcc4e5b",
+      "locator": "People/Max.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Говорят, Максим использует Python.",
+      "revision_id": "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296",
+      "sha256": "ce1b162832a59b31a738f0cc1041be78a2c079cd43224df68a39f7fb768eb0bd",
+      "source_role": "reported",
+      "start_byte": 626,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_4188cf22b2ef7ac01382e16ab1ecbcb6490f134889ed310af42954cfb83fe018",
+      "end_byte": 209,
+      "id": "ev_dc11e657aebe71e875a7c2f0920f3ae4a3c6f51f283d9a65a36a050657171dbd",
+      "locator": "Projects/Atlas.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Максим использует ник @max_dev в GitHub.",
+      "revision_id": "rev_174bc68987545485e45164ffaf6ac11fd580af00a68de06383b6c4b25c2e1ec3",
+      "sha256": "47f29bcc9a44c63fb6f0aac0ae76d748ccd2e00000c8d337ddd3d60eb5de7b8c",
+      "source_role": "direct",
+      "start_byte": 149,
+      "version": "1.0"
+    },
+    {
+      "document_id": "doc_858d6bdcda65d016bffc9c52008ba0c75c5092511e4cde33709e6d22cc9cdaa9",
+      "end_byte": 285,
+      "id": "ev_f64698066104d6917c64262fef2d425cc798211bee54ce18c1aa88c00c17979f",
+      "locator": "People/Max.md",
+      "origin": "body",
+      "parser_version": "1",
+      "quote": "Atlas — проект импорта знаний.",
+      "revision_id": "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296",
+      "sha256": "ce1b162832a59b31a738f0cc1041be78a2c079cd43224df68a39f7fb768eb0bd",
+      "source_role": "direct",
+      "start_byte": 234,
+      "version": "1.0"
+    }
+  ],
+  "inputs": {
+    "collection_id": "col_d2269979017c721d81635877ef6422212264850a9f32879316736f5b8c3ddf71",
+    "documents": [
+      {
+        "chunk_ids": [
+          "chk_0b1223f96239abd58f632351a7dc7092da9c71b748451abb9e0f40fa9c7984d3"
+        ],
+        "document_id": "doc_04c493ecfc5dbc331dcdbfe6081c88597cbaa11f23595b390eac20a6b550ef2b",
+        "locator": "People/Alexey.md",
+        "revision_id": "rev_b31ed2c119a687f8e7c94d8c5ac2d8658332eb64a6b9194afc4beb165d5fe568",
+        "sha256": "2f428660493d4ad473b5baf493e8e4d320322e8f7c93700171e89411b668c3b2"
+      },
+      {
+        "chunk_ids": [
+          "chk_34bdecfc111dae6b509d8a7a6b9344d8b0065ac64bbe5b3132a9ec7be0a8b20a",
+          "chk_0ccedc6ab3dc1321f84b458f8be7c5a7e9c412c2572e7da4f8844dd04730c309"
+        ],
+        "document_id": "doc_858d6bdcda65d016bffc9c52008ba0c75c5092511e4cde33709e6d22cc9cdaa9",
+        "locator": "People/Max.md",
+        "revision_id": "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296",
+        "sha256": "ce1b162832a59b31a738f0cc1041be78a2c079cd43224df68a39f7fb768eb0bd"
+      },
+      {
+        "chunk_ids": [
+          "chk_65a44bbd15a9415d236e1c08e6a31382aeff9631493ea41ff62aca045877af98"
+        ],
+        "document_id": "doc_4188cf22b2ef7ac01382e16ab1ecbcb6490f134889ed310af42954cfb83fe018",
+        "locator": "Projects/Atlas.md",
+        "revision_id": "rev_174bc68987545485e45164ffaf6ac11fd580af00a68de06383b6c4b25c2e1ec3",
+        "sha256": "47f29bcc9a44c63fb6f0aac0ae76d748ccd2e00000c8d337ddd3d60eb5de7b8c"
+      },
+      {
+        "chunk_ids": [
+          "chk_e1d98dbe72be86c7fe2aaaa9d5952b8bc3942302db0bd9f3ab4a5f91db7d0ad6"
+        ],
+        "document_id": "doc_4f345693bb23af8b45ee7d376da4e2718e45d00ffb773acfd7f7bc81b4364030",
+        "locator": "injection.md",
+        "revision_id": "rev_6f94e8779f8eb9b2cd2777e779af28bd8cc6ab772040726567f1451c075b8bfe",
+        "sha256": "9fd859d258bd30c507e1653458c107c5f88bfcc23bb2d7734dd74bd5e9377851"
+      },
+      {
+        "chunk_ids": [
+          "chk_80cd8fa38b8acf170327d7fb75a7df778321ee12e7aa7cc3e32e54e96316f5f6",
+          "chk_50affbf44547fe871dda8a2c90190f0eda324a8d06e600b9b5046902d7008350",
+          "chk_c898e9bfd9f444e386c27ba8b26960d1c97732cf06cebe724af70d7d903fab03",
+          "chk_68d0676e92c73437c4637c0ff6c747341d0fe4d5d28d5fa85c8eca071cfa504d",
+          "chk_939be165c3c4c2f71f321271c95c2f118c270b4228b337881263a4da24df7c24",
+          "chk_a19d490e7dbac0c874c981b29473eba8063a92520891286d23521f31a4b12adc",
+          "chk_a7da9936ece30e603ce278204e07a63bbd94427bf91d2b92ba254b24e4480a12",
+          "chk_3c16e519e1e61d4b69983e7dbc946f2bb9edd6c5e1634995981aa795e34ad8da",
+          "chk_d41079488eaa71faafe10818a746914108888c6da7fa3961afdcb89e8627331b",
+          "chk_99379de2108bbfbfdc41097d6763e6870365ed3280129bf3366569bd54fffd35",
+          "chk_765dacb0a8e351b7f98d1d864934420f44be9d28b1cd1e7546d931129f22c93f",
+          "chk_57d9d1e25cd69e27e552597fed47e898835d4ef727f00b2191fe439fd4f059e0",
+          "chk_c76d0d3537cdc9f5472ad276ccc4ae9dc211384bda1fe2f8a35563d0e38eb8ff",
+          "chk_fdf9f4c5da659a2dbfa9f649288f1b07f65e132c0c0d524292eba1cb6e6fd25c",
+          "chk_bcaed55ff6d0c110c9665a7d734312249498bf5532118f28e17ca6af149c9530",
+          "chk_5e865344a3eced5ab886e6a8ffc08adf047df9ed8c3de826d16f15cf9939513c",
+          "chk_d6fd0cfde676ae2fddb3d53800eeb34a803225bae7dc38e70701dcf87ce03cab",
+          "chk_f1dfdf98ec22494e2c56e5102d22370e33a1ee2b3d5599ec64e19321b1b4047a",
+          "chk_9c70d78d353ab8b67f20632e9a93b6f7104f9114ac46f4aa5ca9fff450493c92",
+          "chk_eb166b904270be9d3ed5bfbe94c64f16420981f7f02d7a3bf2cd99f3120e24a2",
+          "chk_0d01026c041d56fef2989a397b7d04ec23e6139e7347f4e668e8f811c95ed1d9",
+          "chk_776cf4a61fb6fc68b23a70a041526ffeba965cdba99f5af31bd2f974b87c4124",
+          "chk_196f0efc73f33c26f87e30457123fea0dcb2ab627ece2cda36e129f273b07ec6",
+          "chk_bceafa6727269f1dca700060d93978b4dd891ba09db7c0b30bdb45c472ddccc7",
+          "chk_27241f7f0c5090645a9069930e5e3016a45badb088050f623738203c105e3227",
+          "chk_9799f39a79bc350114ad3b61dfaa37fc8c5d5a328716f697e32f66df163a3e9d",
+          "chk_5ce8b3e83003b869c101b7fa53368bfd7c52511e2ef89415157ec294294d5053",
+          "chk_c1a30f345f08ebf2519a3b6ebfab9ff6873b0b518f6e761815d8275f56f8ae86",
+          "chk_2533a0b5518d7dd8cb9a73c8656ca7757d9422a7ef67aaa23a061cea9a107000",
+          "chk_64a592efb1d464cb87c6438ae8a18dc602661f035b9c04ae66b634a6fdf07e51",
+          "chk_529ae9b2051fb4653c4848cf5c5f3288d3100fe699869a42706c489c12f8f08f",
+          "chk_d5d0afef6e6d21875aa3d7bfc1b071d372ccd645dd29027ebb8ad32ee416836a",
+          "chk_4191bb6405e002dd9c42b519f779f571ecc1409fec09bb47380ecd70af194cb2",
+          "chk_bbd5681f3e25e537efcb905fe723ce0cfd56db707db2e0612cd85992c4cc5197",
+          "chk_61b09e012041f824f0d60cfdd97188a08f7b611c1aa3540dbc893f4eb3ef2321",
+          "chk_0d8722f560266f651b86000267471eb39a5b9b50e7cd465b72b8003d5a5b78e8",
+          "chk_a13b6cc526705ea49c743e266eacb8cb2f5c55ebe4254630334637dfb0d388ac",
+          "chk_98eed14a8cbb34ff267ebf1e2f150f0c02bebd2abb8ee4a50a0e167799b5a86c",
+          "chk_911caf79c19e98bc42497b6a34582c0cb2bed8391ebe3afc0b25d69e572066ea",
+          "chk_185be0679be232e6717f2ce8b3d51e36a9969f04570ba249c5d182c16513f059",
+          "chk_54de09b4593d53591d018501f39d43aa7d88cfa59ea276ca3a0dd69373484fff",
+          "chk_9aff7e78424217ae3a9d3e54da25f961f3dd600afb4ef4488bf3213e6d00a315",
+          "chk_188fc4b69dd3937de00a13320b45ceacb3a0223f8af8ea3acd9d490dacb60a71",
+          "chk_3d22793ac3f7b3bdc31fc5d10e6ead29074c9611c9f3b9bc9fa76234e3551d8c",
+          "chk_f87d4368dc06e86bf2644168843a1ea65cb127bfbcafd6d1f1fefff27bda347c",
+          "chk_d896d72acf57ddd4f785e08bd3af8016151130dedbc48d265afbb648091c560c",
+          "chk_1a389c589850a305cf5d0dcbd58ec34fba5dad48df25ab6f017ba9d369db3172",
+          "chk_176ae550ed5894b95af2612373ca795bfd6f2a23d177b296d3a342d9ba517531",
+          "chk_ae328e28d2eb479584d806c9dca58b05c640cbcf2891cb08bb8a1cdd3a8c21f5",
+          "chk_fa01a8cb387cc91b557380bfda76058bda9a0a74381c8869fcda6e7f3054c339",
+          "chk_51ae937b0762800c56e3c736a7b9220f2eddfbe767577bf51199ccd3234492b6",
+          "chk_b49df81caacc34183d1ce727334422790b7944ef4e764e45789f7d836e5984cd"
+        ],
+        "document_id": "doc_7173c20c5e463983a997409abc75d7608ad2ee2b4f07eb46283c25b342369e5d",
+        "locator": "long.md",
+        "revision_id": "rev_8b61b3293116f240989de2ae483097c45d1dfe12fd8105cc34643bfc58c597b3",
+        "sha256": "ec8f26851abd4b072ffb337204d037e0d420abc067bc3c3cb45244307e9a908a"
+      }
+    ],
+    "vault_id": "personal"
+  },
+  "job_id": "job_d9f1669512b4fc4bb5e4c41d2dbdc52e46c052ac4040f38a8a980ff48d012aec",
+  "mentions": [
+    {
+      "end_byte": 22,
+      "evidence_ids": [
+        "ev_a6126ff7b46c5f172c5dfc2b9560b2ed13b43541e622238f88d537d1bfdcd52f"
+      ],
+      "id": "men_239b36528e89e196d70546bec021ba47020c560ba5c4a9c14d37546826f3d45a",
+      "resolution": {
+        "basis": [
+          "distinct_source_identity"
+        ],
+        "candidate_entity_ids": [
+          "ent_d72880cc71cc8a9125a154946fb4898cde64feb53775d8461c767a968d5a6b09"
+        ],
+        "chosen_entity_id": "ent_d72880cc71cc8a9125a154946fb4898cde64feb53775d8461c767a968d5a6b09",
+        "status": "new_candidate",
+        "version": "1.0"
+      },
+      "revision_id": "rev_174bc68987545485e45164ffaf6ac11fd580af00a68de06383b6c4b25c2e1ec3",
+      "start_byte": 8,
+      "state": "staged",
+      "surface": "Алексей",
+      "version": "1.0"
+    },
+    {
+      "end_byte": 161,
+      "evidence_ids": [
+        "ev_dc11e657aebe71e875a7c2f0920f3ae4a3c6f51f283d9a65a36a050657171dbd"
+      ],
+      "id": "men_2f81baab2cd835044aba5b31b7430afc48e94b26b24a916e2c1583a1ca4c406a",
+      "resolution": {
+        "basis": [
+          "approved_scoped_alias",
+          "direct_identity_context"
+        ],
+        "candidate_entity_ids": [
+          "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3"
+        ],
+        "chosen_entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3",
+        "status": "resolved",
+        "version": "1.0"
+      },
+      "revision_id": "rev_174bc68987545485e45164ffaf6ac11fd580af00a68de06383b6c4b25c2e1ec3",
+      "start_byte": 149,
+      "state": "staged",
+      "surface": "Максим",
+      "version": "1.0"
+    },
+    {
+      "end_byte": 31,
+      "evidence_ids": [
+        "ev_0e1a5505572759c270bae2be7f1a8785c12448a33c14fb383a27ce404226ad25"
+      ],
+      "id": "men_39b5134dca67104f343f4c73b3108edc394ce4b4dd694f6d860c030680a7cb08",
+      "resolution": {
+        "basis": [
+          "new_grounded_identity"
+        ],
+        "candidate_entity_ids": [
+          "ent_26371b94f4f70a214e1883ae2030a4683d65a7fbb7c205e55e6dbbbd8e4ea790"
+        ],
+        "chosen_entity_id": "ent_26371b94f4f70a214e1883ae2030a4683d65a7fbb7c205e55e6dbbbd8e4ea790",
+        "status": "new_candidate",
+        "version": "1.0"
+      },
+      "revision_id": "rev_b31ed2c119a687f8e7c94d8c5ac2d8658332eb64a6b9194afc4beb165d5fe568",
+      "start_byte": 17,
+      "state": "staged",
+      "surface": "Алексей",
+      "version": "1.0"
+    },
+    {
+      "end_byte": 559,
+      "evidence_ids": [
+        "ev_3f07bd9bbef597259e531e1f5c0e062dc91c309a77266ea7fae75eacc89807f3"
+      ],
+      "id": "men_891c483fb72a4af0097a4d74e61613e377dec8efa9096e36e74e83fb37f2a8f6",
+      "resolution": {
+        "basis": [
+          "name_alone_not_identity"
+        ],
+        "candidate_entity_ids": [
+          "ent_26371b94f4f70a214e1883ae2030a4683d65a7fbb7c205e55e6dbbbd8e4ea790"
+        ],
+        "chosen_entity_id": null,
+        "status": "unresolved",
+        "version": "1.0"
+      },
+      "revision_id": "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296",
+      "start_byte": 545,
+      "state": "staged",
+      "surface": "Алексей",
+      "version": "1.0"
+    },
+    {
+      "end_byte": 96,
+      "evidence_ids": [
+        "ev_8f8ab840b2183ef19b5d113bfeb31a3462e4617ee188c7df9889226d818d5ef6"
+      ],
+      "id": "men_a285a0de9e295c4fcdc6044d91b59317510045674d054d25002da3888b7910be",
+      "resolution": {
+        "basis": [
+          "new_grounded_identity"
+        ],
+        "candidate_entity_ids": [
+          "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3"
+        ],
+        "chosen_entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3",
+        "status": "new_candidate",
+        "version": "1.0"
+      },
+      "revision_id": "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296",
+      "start_byte": 84,
+      "state": "staged",
+      "surface": "Максим",
+      "version": "1.0"
+    },
+    {
+      "end_byte": 102,
+      "evidence_ids": [
+        "ev_9bdbf72678df5845928fc66ed67ebe099702817d386b7aa2e7a3531e0d89ae3d"
+      ],
+      "id": "men_afadcd9a799a0dba2aa0ce97ecb9be0d328e35217322b4fb0b9af3fc0cfa3a39",
+      "resolution": {
+        "basis": [
+          "exact_canonical_name",
+          "direct_context"
+        ],
+        "candidate_entity_ids": [
+          "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902"
+        ],
+        "chosen_entity_id": "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902",
+        "status": "resolved",
+        "version": "1.0"
+      },
+      "revision_id": "rev_174bc68987545485e45164ffaf6ac11fd580af00a68de06383b6c4b25c2e1ec3",
+      "start_byte": 97,
+      "state": "staged",
+      "surface": "Atlas",
+      "version": "1.0"
+    },
+    {
+      "end_byte": 239,
+      "evidence_ids": [
+        "ev_f64698066104d6917c64262fef2d425cc798211bee54ce18c1aa88c00c17979f"
+      ],
+      "id": "men_fdcf226b5a8d2c04bd3a7ad5ee9005f5204d0b63e8dd8b2851d648557ba081bc",
+      "resolution": {
+        "basis": [
+          "new_grounded_identity"
+        ],
+        "candidate_entity_ids": [
+          "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902"
+        ],
+        "chosen_entity_id": "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902",
+        "status": "new_candidate",
+        "version": "1.0"
+      },
+      "revision_id": "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296",
+      "start_byte": 234,
+      "state": "staged",
+      "surface": "Atlas",
+      "version": "1.0"
+    }
+  ],
+  "metrics": {
+    "chunks": 57,
+    "chunks_completed": 57,
+    "context_entries_omitted": 0,
+    "files": 5,
+    "llm_cost": null,
+    "llm_usage": null,
+    "max_request_bytes": 27792,
+    "muninn_read_calls": 0,
+    "muninn_write_calls": 0,
+    "provider_calls": 57,
+    "provider_errors": 0,
+    "validation_errors": 0
+  },
+  "operations": [
+    {
+      "decision": "deferred",
+      "depends_on": [],
+      "details": {
+        "conflicting_claim_ids": [],
+        "external_memory_candidate_ids": []
+      },
+      "evidence_ids": [
+        "ev_913306e44f5f623d86d1ed30474c70bba0301d4a5a6fd566b7b389388b8dcbf4"
+      ],
+      "kind": "defer",
+      "operation_id": "op_101ebde9bd6482ae2159557f1c12f7ec1d5770149c6824f5137e3cf76da7b5cb",
+      "preconditions": {},
+      "reason_codes": [
+        "modality_question"
+      ],
+      "source_refs": [
+        "chk_0ccedc6ab3dc1321f84b458f8be7c5a7e9c412c2572e7da4f8844dd04730c309",
+        "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296"
+      ],
+      "target_id": "clm_deferred_ffcb5a6d092a2fce6d6c74fbe0b91e6e2ee259888c40e1fea23b58f776df9f15",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [],
+      "details": {},
+      "evidence_ids": [
+        "ev_0e1a5505572759c270bae2be7f1a8785c12448a33c14fb383a27ce404226ad25"
+      ],
+      "kind": "create_entity",
+      "operation_id": "op_1f1592d0fcf475039ee23a9cb01b8e78daff7d4028b3cfe61aa949cc04cfe85c",
+      "preconditions": {
+        "identity_resolution": "new_candidate"
+      },
+      "reason_codes": [
+        "new_grounded_identity"
+      ],
+      "source_refs": [],
+      "target_id": "ent_26371b94f4f70a214e1883ae2030a4683d65a7fbb7c205e55e6dbbbd8e4ea790",
+      "version": "1.0"
+    },
+    {
+      "decision": "deferred",
+      "depends_on": [],
+      "details": {
+        "conflicting_claim_ids": [
+          "clm_deferred_4b8534af2c48de67be023bb88ef8149295ae8c8896a77d7486e6951e64203f92"
+        ]
+      },
+      "evidence_ids": [
+        "ev_d1d7ff03ddf9eb826692fa05566d09a7f9b625866eb084538eb041e41f37d3f5"
+      ],
+      "kind": "defer",
+      "operation_id": "op_38e5e6488a94dc3d26eab0156a42307af473a0c1188c064f7513787a907ca4c5",
+      "preconditions": {},
+      "reason_codes": [
+        "conflict_requires_review"
+      ],
+      "source_refs": [],
+      "target_id": "clm_715f40a4c0d0226defb529ee3c4e8f3259e7830e49f0cae211e10c9ada4f53bf",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [],
+      "details": {},
+      "evidence_ids": [
+        "ev_8f8ab840b2183ef19b5d113bfeb31a3462e4617ee188c7df9889226d818d5ef6"
+      ],
+      "kind": "create_entity",
+      "operation_id": "op_483c1e9555567e17c337868eeba30366959194e8ec8d6ac4b64c249bff6a2a2f",
+      "preconditions": {
+        "identity_resolution": "new_candidate"
+      },
+      "reason_codes": [
+        "new_grounded_identity"
+      ],
+      "source_refs": [],
+      "target_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3",
+      "version": "1.0"
+    },
+    {
+      "decision": "deferred",
+      "depends_on": [],
+      "details": {
+        "conflicting_claim_ids": [],
+        "external_memory_candidate_ids": []
+      },
+      "evidence_ids": [
+        "ev_b92d03dbc9b0c4ec6514f3abc3c616ca32b9bdf89d5720d2e0f6111b6fe11fd0"
+      ],
+      "kind": "defer",
+      "operation_id": "op_630ddcbeb604b1d13f5134f908d644dee5e83dbb81366059da9bf29c27c03ce4",
+      "preconditions": {},
+      "reason_codes": [
+        "modality_planned"
+      ],
+      "source_refs": [
+        "chk_0ccedc6ab3dc1321f84b458f8be7c5a7e9c412c2572e7da4f8844dd04730c309",
+        "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296"
+      ],
+      "target_id": "clm_deferred_22a8a0ec498a17faf07dbea6349458f29cc77316fca2356a898ea56b8a80b32d",
+      "version": "1.0"
+    },
+    {
+      "decision": "deferred",
+      "depends_on": [],
+      "details": {
+        "conflicting_claim_ids": [
+          "clm_715f40a4c0d0226defb529ee3c4e8f3259e7830e49f0cae211e10c9ada4f53bf"
+        ],
+        "external_memory_candidate_ids": []
+      },
+      "evidence_ids": [
+        "ev_3c7411d484a1fb4bdba7ff71d8a5d178a78e3c1316a6f3949acdc2d4c62df6b4"
+      ],
+      "kind": "conflict_warning",
+      "operation_id": "op_729dba861e02b5194e0a842e355287a82bb000900bbf8b40116859acee6707c5",
+      "preconditions": {},
+      "reason_codes": [
+        "conflict_requires_review",
+        "single_value_conflict"
+      ],
+      "source_refs": [
+        "chk_65a44bbd15a9415d236e1c08e6a31382aeff9631493ea41ff62aca045877af98",
+        "rev_174bc68987545485e45164ffaf6ac11fd580af00a68de06383b6c4b25c2e1ec3"
+      ],
+      "target_id": "clm_deferred_4b8534af2c48de67be023bb88ef8149295ae8c8896a77d7486e6951e64203f92",
+      "version": "1.0"
+    },
+    {
+      "decision": "deferred",
+      "depends_on": [],
+      "details": {
+        "candidate_entity_ids": [
+          "ent_26371b94f4f70a214e1883ae2030a4683d65a7fbb7c205e55e6dbbbd8e4ea790"
+        ],
+        "surface": "Алексей"
+      },
+      "evidence_ids": [
+        "ev_3f07bd9bbef597259e531e1f5c0e062dc91c309a77266ea7fae75eacc89807f3"
+      ],
+      "kind": "defer",
+      "operation_id": "op_73ef7be77e80bc5dee23fe5aa1dd7695e5cf79a8f5331896430344f529227d88",
+      "preconditions": {},
+      "reason_codes": [
+        "name_alone_not_identity"
+      ],
+      "source_refs": [],
+      "target_id": "men_891c483fb72a4af0097a4d74e61613e377dec8efa9096e36e74e83fb37f2a8f6",
+      "version": "1.0"
+    },
+    {
+      "decision": "deferred",
+      "depends_on": [],
+      "details": {
+        "conflicting_claim_ids": [],
+        "external_memory_candidate_ids": []
+      },
+      "evidence_ids": [
+        "ev_3f07bd9bbef597259e531e1f5c0e062dc91c309a77266ea7fae75eacc89807f3"
+      ],
+      "kind": "defer",
+      "operation_id": "op_95134551e1970140eee34f1b2f4943008b2421836bd368e7447caf8ff290cec2",
+      "preconditions": {},
+      "reason_codes": [
+        "modality_hypothetical",
+        "unresolved_object"
+      ],
+      "source_refs": [
+        "chk_0ccedc6ab3dc1321f84b458f8be7c5a7e9c412c2572e7da4f8844dd04730c309",
+        "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296"
+      ],
+      "target_id": "clm_deferred_e7b625e39041db2db69d24a5045f959f813ea39686b650048bf48ee5b4857020",
+      "version": "1.0"
+    },
+    {
+      "decision": "deferred",
+      "depends_on": [],
+      "details": {
+        "conflicting_claim_ids": [],
+        "external_memory_candidate_ids": []
+      },
+      "evidence_ids": [
+        "ev_a4ef9fc9ba7f1656b6ccaa2dff1fc3c09bdb5aa7e732185e2af6f21a8dc9d5ad"
+      ],
+      "kind": "defer",
+      "operation_id": "op_a99476c7593ff7661ffddfc3e08fe16671e023a68eb9d95be286141a0076cc19",
+      "preconditions": {},
+      "reason_codes": [
+        "unresolved_temporal_reference"
+      ],
+      "source_refs": [
+        "chk_0ccedc6ab3dc1321f84b458f8be7c5a7e9c412c2572e7da4f8844dd04730c309",
+        "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296"
+      ],
+      "target_id": "clm_deferred_e1bd1081bea69afc35e1e9ff0a03b3e401c0246af6326f9f882472971aa4a9f3",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [],
+      "details": {},
+      "evidence_ids": [
+        "ev_a6126ff7b46c5f172c5dfc2b9560b2ed13b43541e622238f88d537d1bfdcd52f"
+      ],
+      "kind": "create_entity",
+      "operation_id": "op_b168562fc52078bc58cfd0e34db63dac001fe09b296594516e7ba89db4797129",
+      "preconditions": {
+        "identity_resolution": "new_candidate"
+      },
+      "reason_codes": [
+        "new_grounded_identity"
+      ],
+      "source_refs": [],
+      "target_id": "ent_d72880cc71cc8a9125a154946fb4898cde64feb53775d8461c767a968d5a6b09",
+      "version": "1.0"
+    },
+    {
+      "decision": "deferred",
+      "depends_on": [],
+      "details": {
+        "conflicting_claim_ids": [],
+        "external_memory_candidate_ids": []
+      },
+      "evidence_ids": [
+        "ev_d34f769bf29fd6b6ee4a0e8c87bf0d8f0a1381f9734946410a9447b48dcc4e5b"
+      ],
+      "kind": "defer",
+      "operation_id": "op_b3bb336917b30b0525e2b3de766cfc133823128a7a03b7b94aa549c293b167a2",
+      "preconditions": {},
+      "reason_codes": [
+        "modality_reported",
+        "non_direct_claim_evidence"
+      ],
+      "source_refs": [
+        "chk_0ccedc6ab3dc1321f84b458f8be7c5a7e9c412c2572e7da4f8844dd04730c309",
+        "rev_40d81d93a85b25144e7b34f5910408cca7808cfd0f96e3d9ad3cc233fc668296"
+      ],
+      "target_id": "clm_deferred_abd401c63fba5f87b97ba1bdc22dfbdcb5a2758cb8e224f561c9f5d1ce16136b",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [],
+      "details": {},
+      "evidence_ids": [
+        "ev_f64698066104d6917c64262fef2d425cc798211bee54ce18c1aa88c00c17979f"
+      ],
+      "kind": "create_entity",
+      "operation_id": "op_eabe07b871c55a999bb9db8ffcd9f84fc16917eead83fd257adf3ae828a122e5",
+      "preconditions": {
+        "identity_resolution": "new_candidate"
+      },
+      "reason_codes": [
+        "new_grounded_identity"
+      ],
+      "source_refs": [],
+      "target_id": "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [
+        "op_1f1592d0fcf475039ee23a9cb01b8e78daff7d4028b3cfe61aa949cc04cfe85c"
+      ],
+      "details": {
+        "candidate_entity_ids": [],
+        "entity_id": "ent_26371b94f4f70a214e1883ae2030a4683d65a7fbb7c205e55e6dbbbd8e4ea790",
+        "scope": "local",
+        "value": "Лёша"
+      },
+      "evidence_ids": [
+        "ev_6d6193ac4c19723cab58a6576dfb8b9740f3b580ceb12fa13d60c88b26997a67"
+      ],
+      "kind": "add_alias",
+      "operation_id": "op_86fc8d889b99490a684d9e6463c264c571366d596113f5d3f068af486ebfaa5e",
+      "preconditions": {},
+      "reason_codes": [
+        "direct_alias_evidence",
+        "no_alias_collision"
+      ],
+      "source_refs": [],
+      "target_id": "als_35ce431e20bca970c1ddf21342cc2fbf471274b9a9be1a8024939d48f5555f9b",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [
+        "op_483c1e9555567e17c337868eeba30366959194e8ec8d6ac4b64c249bff6a2a2f",
+        "op_eabe07b871c55a999bb9db8ffcd9f84fc16917eead83fd257adf3ae828a122e5"
+      ],
+      "details": {
+        "reconciliation": "create"
+      },
+      "evidence_ids": [
+        "ev_cfc5dde2e30e8aecbaf776b58c12e0d82397f0fed172eac51e94376547fc2ca7"
+      ],
+      "kind": "create_claim",
+      "operation_id": "op_a52e780dcd1e79208b3d61df31db16f1bf03a82a3428e038c11d65fdee91fc53",
+      "preconditions": {
+        "canonical_hash": "30f3611441df865e1aec7e770dee8e182b3035366418434202d138b12cf3ce68",
+        "claim_not_committed": true,
+        "resolved_entity_ids": [
+          "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902",
+          "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3"
+        ]
+      },
+      "reason_codes": [
+        "grounded_evidence",
+        "new_claim",
+        "resolved_identities"
+      ],
+      "source_refs": [],
+      "target_id": "clm_45f753f1788d8b99d1886d7cd03d9cd92444912cf8bcdc6d3203551cb27e27d9",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [
+        "op_1f1592d0fcf475039ee23a9cb01b8e78daff7d4028b3cfe61aa949cc04cfe85c"
+      ],
+      "details": {
+        "candidate_entity_ids": [],
+        "entity_id": "ent_26371b94f4f70a214e1883ae2030a4683d65a7fbb7c205e55e6dbbbd8e4ea790",
+        "scope": "service:github",
+        "value": "@alex_design"
+      },
+      "evidence_ids": [
+        "ev_6d6193ac4c19723cab58a6576dfb8b9740f3b580ceb12fa13d60c88b26997a67"
+      ],
+      "kind": "add_alias",
+      "operation_id": "op_b414757925052c98118f0ae5582e5987f70d0f61056b8d741164388216c33707",
+      "preconditions": {},
+      "reason_codes": [
+        "direct_alias_evidence",
+        "no_alias_collision"
+      ],
+      "source_refs": [],
+      "target_id": "als_baba5c7f1f07ffc937d903ea74d0910b567b321b98df98f016eb03091f49396d",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [
+        "op_483c1e9555567e17c337868eeba30366959194e8ec8d6ac4b64c249bff6a2a2f",
+        "op_eabe07b871c55a999bb9db8ffcd9f84fc16917eead83fd257adf3ae828a122e5"
+      ],
+      "details": {
+        "reconciliation": "create"
+      },
+      "evidence_ids": [
+        "ev_7110513c7fb5d0c47cd948af3682f2916a751464d366ee21c727fbc8f1028de3"
+      ],
+      "kind": "create_claim",
+      "operation_id": "op_c6a1c77ac18aded9947f6dbd9ddd23b1ff0366528a1d7e08711c2e054f5efff2",
+      "preconditions": {
+        "canonical_hash": "f9d18d93b0c73325b7c4c777b4f373262adc77198a45c41b99301d360e51e99f",
+        "claim_not_committed": true,
+        "resolved_entity_ids": [
+          "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902",
+          "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3"
+        ]
+      },
+      "reason_codes": [
+        "grounded_evidence",
+        "new_claim",
+        "resolved_identities"
+      ],
+      "source_refs": [],
+      "target_id": "clm_d115cb71b0ff8adeda257b06d12600e6cc54d41db4c81cb5aaeb0f9397fccfdc",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [
+        "op_483c1e9555567e17c337868eeba30366959194e8ec8d6ac4b64c249bff6a2a2f"
+      ],
+      "details": {
+        "candidate_entity_ids": [],
+        "entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3",
+        "scope": "local",
+        "value": "Макс"
+      },
+      "evidence_ids": [
+        "ev_46fb5c9e6cf1a5cd05c2c39b93dd967f4246c97ba4a189bddddf896a4d900262"
+      ],
+      "kind": "add_alias",
+      "operation_id": "op_d53f6b51f9ac0417c6288fc9da37a116f8d8ee69c18694ffc1a7f3a1dee64c1e",
+      "preconditions": {},
+      "reason_codes": [
+        "direct_alias_evidence",
+        "no_alias_collision"
+      ],
+      "source_refs": [],
+      "target_id": "als_da4c0cd8c599bd6331b04ce39cf0278f95645aeb9d2adad11a5a0281e0a63825",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [
+        "op_483c1e9555567e17c337868eeba30366959194e8ec8d6ac4b64c249bff6a2a2f"
+      ],
+      "details": {
+        "candidate_entity_ids": [],
+        "entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3",
+        "scope": "service:github",
+        "value": "@max_dev"
+      },
+      "evidence_ids": [
+        "ev_46fb5c9e6cf1a5cd05c2c39b93dd967f4246c97ba4a189bddddf896a4d900262"
+      ],
+      "kind": "add_alias",
+      "operation_id": "op_ef11ac797c146bce70b703813c48cfc436dbf89563798a0309ecfea015e72f1a",
+      "preconditions": {},
+      "reason_codes": [
+        "direct_alias_evidence",
+        "no_alias_collision"
+      ],
+      "source_refs": [],
+      "target_id": "als_f87026bb3f8e1a2280d4872ed24e506de25ffa3e959313110e8b05928beac029",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [
+        "op_a52e780dcd1e79208b3d61df31db16f1bf03a82a3428e038c11d65fdee91fc53"
+      ],
+      "details": {
+        "ledger_only": true,
+        "reconciliation": "reinforce"
+      },
+      "evidence_ids": [
+        "ev_bae6804ae3aed3088e817c610dd3a5a2ac1bca051224237400ef8ce9d3ad8391"
+      ],
+      "kind": "add_evidence",
+      "operation_id": "op_2ef7f6315a065c0f80ace78ba3a7daad911146ebab9098c1f663bcdeba85e9ef",
+      "preconditions": {
+        "canonical_hash": "30f3611441df865e1aec7e770dee8e182b3035366418434202d138b12cf3ce68",
+        "resolved_entity_ids": [
+          "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902",
+          "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3"
+        ]
+      },
+      "reason_codes": [
+        "new_evidence",
+        "same_canonical_claim"
+      ],
+      "source_refs": [],
+      "target_id": "clm_45f753f1788d8b99d1886d7cd03d9cd92444912cf8bcdc6d3203551cb27e27d9",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [
+        "op_483c1e9555567e17c337868eeba30366959194e8ec8d6ac4b64c249bff6a2a2f",
+        "op_c6a1c77ac18aded9947f6dbd9ddd23b1ff0366528a1d7e08711c2e054f5efff2"
+      ],
+      "details": {
+        "entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3",
+        "ledger_only": true
+      },
+      "evidence_ids": [
+        "ev_7110513c7fb5d0c47cd948af3682f2916a751464d366ee21c727fbc8f1028de3"
+      ],
+      "kind": "link_claim_entity",
+      "operation_id": "op_68289b2dcf469c7c154f24e6b593fa12702d24c12329df59480a055a3d9ee534",
+      "preconditions": {},
+      "reason_codes": [
+        "resolved_claim_reference"
+      ],
+      "source_refs": [],
+      "target_id": "clm_d115cb71b0ff8adeda257b06d12600e6cc54d41db4c81cb5aaeb0f9397fccfdc",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [
+        "op_c6a1c77ac18aded9947f6dbd9ddd23b1ff0366528a1d7e08711c2e054f5efff2",
+        "op_eabe07b871c55a999bb9db8ffcd9f84fc16917eead83fd257adf3ae828a122e5"
+      ],
+      "details": {
+        "entity_id": "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902",
+        "ledger_only": true
+      },
+      "evidence_ids": [
+        "ev_7110513c7fb5d0c47cd948af3682f2916a751464d366ee21c727fbc8f1028de3"
+      ],
+      "kind": "link_claim_entity",
+      "operation_id": "op_92784dc94eb9bee7edfd4a2fb40849accf2bb4017386b419a49e74c3bc52946b",
+      "preconditions": {},
+      "reason_codes": [
+        "resolved_claim_reference"
+      ],
+      "source_refs": [],
+      "target_id": "clm_d115cb71b0ff8adeda257b06d12600e6cc54d41db4c81cb5aaeb0f9397fccfdc",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [
+        "op_483c1e9555567e17c337868eeba30366959194e8ec8d6ac4b64c249bff6a2a2f",
+        "op_a52e780dcd1e79208b3d61df31db16f1bf03a82a3428e038c11d65fdee91fc53"
+      ],
+      "details": {
+        "entity_id": "ent_b4a5626ad07a46283645606d92da15362738ef933cad9e572163aa70eb169ea3",
+        "ledger_only": true
+      },
+      "evidence_ids": [
+        "ev_cfc5dde2e30e8aecbaf776b58c12e0d82397f0fed172eac51e94376547fc2ca7"
+      ],
+      "kind": "link_claim_entity",
+      "operation_id": "op_cb3bbb62000dbec9782dac90afda0c9fe517e27fed5f0ed802ab5cd66dc5f905",
+      "preconditions": {},
+      "reason_codes": [
+        "resolved_claim_reference"
+      ],
+      "source_refs": [],
+      "target_id": "clm_45f753f1788d8b99d1886d7cd03d9cd92444912cf8bcdc6d3203551cb27e27d9",
+      "version": "1.0"
+    },
+    {
+      "decision": "approved",
+      "depends_on": [
+        "op_a52e780dcd1e79208b3d61df31db16f1bf03a82a3428e038c11d65fdee91fc53",
+        "op_eabe07b871c55a999bb9db8ffcd9f84fc16917eead83fd257adf3ae828a122e5"
+      ],
+      "details": {
+        "entity_id": "ent_1066cb5d8e617bff90528043a3acfb35ac2b800eb2f1fcdf561b7dae60bd8902",
+        "ledger_only": true
+      },
+      "evidence_ids": [
+        "ev_cfc5dde2e30e8aecbaf776b58c12e0d82397f0fed172eac51e94376547fc2ca7"
+      ],
+      "kind": "link_claim_entity",
+      "operation_id": "op_e46c91bac189fd8f5ead6678bd01c0764c057d53f091021d6fe9e68cfca863da",
+      "preconditions": {},
+      "reason_codes": [
+        "resolved_claim_reference"
+      ],
+      "source_refs": [],
+      "target_id": "clm_45f753f1788d8b99d1886d7cd03d9cd92444912cf8bcdc6d3203551cb27e27d9",
+      "version": "1.0"
+    }
+  ],
+  "status": "planned",
+  "summary": {
+    "add_alias": 4,
+    "add_evidence": 1,
+    "conflict_warning": 1,
+    "create_claim": 2,
+    "create_entity": 4,
+    "defer": 7,
+    "link_claim_entity": 4,
+    "skip_duplicate": 0
+  },
+  "version": "1.0",
+  "warnings": [
+    {
+      "detail": "Explicit offline context; no backend calls made.",
+      "reason": "offline_ledger_only"
+    }
+  ]
+}

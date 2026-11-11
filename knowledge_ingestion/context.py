@@ -1,5 +1,58 @@
 """Offline capability fallback: committed ledger plus this job's staged overlay."""
-from .contracts import VERSION
+import copy
+
+from .contracts import EXTRACTION_SCHEMA, VERSION, canonical_json
+
+CONTEXT_VERSION = 'bounded-context-1'
+ENTRY_BYTES = 2048
+
+
+def bounded_messages(source, bundle, model_config, maximum, feedback=None):
+    """Bound the complete serialized wire body, retaining exact source text.
+
+    Context is a shortlist only; full resolution always reads the local ledger.
+    Oversized entries are omitted whole rather than silently changing a claim.
+    """
+    from .llm import ProviderError, extraction_messages, request_size
+    value = copy.deepcopy(bundle)
+    limits = {'known_entities': 64, 'approved_aliases': 64, 'known_claims': 40,
+              'external_memory_candidates': 12, 'relevant_engrams': 7, 'retrieval_trace': 8}
+    before, omitted = {}, {}
+    for field, limit in limits.items():
+        entries = value.get(field, [])
+        before[field] = len(entries)
+        value[field] = [e for e in entries[:limit]
+                        if len(canonical_json(e).encode('utf-8')) <= ENTRY_BYTES]
+        omitted[field] = before[field] - len(value[field])
+    digest = value.get('staged_digest', {})
+    before['staged_digest_items'] = len(digest.get('items', []))
+    omitted['staged_digest_items'] = 0
+    metadata = {'version': CONTEXT_VERSION, 'request_budget_bytes': maximum,
+                'entry_budget_bytes': ENTRY_BYTES, 'input_counts': before, 'omitted_counts': omitted,
+                'source_truncated': False, 'full_local_resolution': True}
+    value['budget'] = metadata
+
+    def messages():
+        result = extraction_messages(source, value)
+        if feedback:
+            result[0]['content'] += '\nValidation feedback: ' + canonical_json(feedback)
+        return result
+
+    result = messages()
+    while request_size(EXTRACTION_SCHEMA, result, model_config) > maximum:
+        # Drop the largest remaining context tail, including staged digest.
+        groups = [(key, value[key]) for key in limits if value[key]]
+        if digest.get('items'):
+            groups.append(('staged_digest_items', digest['items']))
+        if not groups:
+            raise ProviderError('request_budget_exceeded')
+        field, entries = max(groups, key=lambda pair: len(canonical_json(pair[1]).encode('utf-8')))
+        entries.pop()
+        omitted[field] += 1
+        if field == 'staged_digest_items':
+            digest['omitted'] = digest.get('omitted', 0) + 1
+        result = messages()
+    return result, metadata, request_size(EXTRACTION_SCHEMA, result, model_config)
 
 
 class OfflineContextProvider:
@@ -13,10 +66,10 @@ class OfflineContextProvider:
     def bundle(self, ledger, digest_budget):
         return {'version': VERSION, 'capability_fallback': 'offline_ledger_only',
                 'known_entities': [dict(e, trust='committed' if e.get('state') == 'committed' else 'staged_uncommitted')
-                                   for e in ledger.entities()[:64]],
-                'approved_aliases': [a for a in ledger.aliases() if a['status'] == 'approved'][:64],
-                'known_claims': ledger.claims()[:40],
-                'external_memory_candidates': self.external_candidates[:12],
+                                   for e in ledger.entities()],
+                'approved_aliases': [a for a in ledger.aliases() if a['status'] == 'approved'],
+                'known_claims': ledger.claims(),
+                'external_memory_candidates': self.external_candidates,
                 'retrieval_trace': [], 'muninn_read_calls': 0, 'muninn_write_calls': 0,
                 'staged_digest': ledger.digest(digest_budget)}
 
@@ -36,7 +89,9 @@ class ObserveContextProvider(OfflineContextProvider):
         self.ready = None
         self.warnings = [{'reason': 'observe_cognitive_feedback_unmeasured',
                           'detail': 'Observe GET/ACTIVATE; full cognitive immutability is not established.'},
-                         {'reason': 'native_entities_local_fallback', 'detail': 'Native name lookup is optional; local IDs remain authoritative.'}]
+                         {'reason': 'native_entities_local_fallback', 'detail': 'Native name lookup is optional; local IDs remain authoritative.'},
+                         {'reason': 'legacy_semantic_reconciliation_partial',
+                          'detail': 'Retrieved snippets are unstructured possible matches; no complete legacy semantic conflict/dedup gate.'}]
 
     def bundle(self, ledger, digest_budget):
         from .muninn import BackendError

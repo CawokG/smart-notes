@@ -9,14 +9,14 @@ import re
 from collections import Counter
 from datetime import datetime, timezone
 
-from .context import OfflineContextProvider
+from .context import CONTEXT_VERSION, OfflineContextProvider, bounded_messages
 from .contracts import (EXTRACTION_SCHEMA, PARSER_VERSION, PROMPT_VERSION, RULES_VERSION,
                         VERSION, ValidationError, canonical_json, canonical_object,
                         canonical_predicate, canonical_time, claim_fingerprint,
                         content_hash, normalize_alias, normalize_json, stable_id,
                         validate_extraction)
 from .evidence import has_direct_name, plain_source, read_snapshot, validate_anchors
-from .llm import ProviderError, extraction_messages
+from .llm import REQUEST_BYTES, SYSTEM_PROMPT, WIRE_VERSION, ProviderError
 from .resolution import audit_alias, resolve_mention
 from .storage import Ledger, committed_revision, connect, now
 
@@ -328,9 +328,12 @@ class OfflinePlanner:
 def load_documents(db, collection_id):
     if not db.execute('SELECT 1 FROM collections WHERE id=?', (collection_id,)).fetchone():
         raise ValueError('unknown_collection')
+    if not db.execute('SELECT 1 FROM collection_scans WHERE collection_id=?', (collection_id,)).fetchone():
+        raise ValueError('rescan_required')
     result = []
     for row in db.execute('''SELECT d.id AS document_id,d.locator,r.*,m.captured_at FROM documents d
-                            JOIN source_revisions r ON r.id=d.last_revision_id
+                            JOIN scan_membership s ON s.document_id=d.id AND s.collection_id=d.collection_id
+                            JOIN source_revisions r ON r.id=s.revision_id
                             LEFT JOIN revision_metadata m ON m.revision_id=r.id
                             WHERE d.collection_id=? ORDER BY d.locator,d.id''', (collection_id,)):
         value = dict(row)
@@ -391,7 +394,7 @@ def policy_gate(operations, ledger, evidence):
     return topological_operations(operations)
 
 
-def stale_source_warnings(db, documents, vault):
+def stale_source_warnings(db, documents, vault, collection_id):
     warnings = []
     for document in documents:
         for row in db.execute('''SELECT ce.claim_id,e.quote,e.revision_id FROM claim_evidence ce
@@ -402,15 +405,26 @@ def stale_source_warnings(db, documents, vault):
             if row['quote'].encode('utf-8') not in read_snapshot(document):
                 warnings.append({'reason': 'possibly_stale_source', 'claim_id': row['claim_id'],
                                  'previous_revision_id': row['revision_id'], 'revision_id': document['revision_id']})
+    for row in db.execute('''SELECT DISTINCT ce.claim_id,e.revision_id,d.locator FROM claim_evidence ce
+        JOIN claims c ON c.id=ce.claim_id JOIN evidence e ON e.id=ce.evidence_id
+        JOIN source_revisions r ON r.id=e.revision_id JOIN documents d ON d.id=r.document_id
+        LEFT JOIN scan_membership s ON s.document_id=d.id AND s.collection_id=d.collection_id
+        WHERE c.vault_id=? AND d.collection_id=? AND s.document_id IS NULL ORDER BY ce.claim_id,e.revision_id''',
+        (vault, collection_id)):
+        warnings.append({'reason': 'possibly_stale_source', 'claim_id': row['claim_id'],
+                         'previous_revision_id': row['revision_id'], 'locator': row['locator'],
+                         'detail': 'Source absent or ineligible in the current scan; memory retained.'})
     return warnings
 
 
 def plan(collection_id, data, provider, vault='personal', digest_budget=4096,
-         context_provider=None):
+         context_provider=None, request_budget=REQUEST_BYTES):
     if not isinstance(vault, str) or not vault.strip() or len(vault) > 100:
         raise ValueError('provide_a_vault_id')
     if type(digest_budget) is not int or not 512 <= digest_budget <= 16384:
         raise ValueError('digest_budget_must_be_512_to_16384_bytes')
+    if type(request_budget) is not int or not 16384 <= request_budget <= 262144:
+        raise ValueError('request_budget_must_be_16384_to_262144_bytes')
     context = context_provider or OfflineContextProvider()
     # External snippets stay possible matches, never canonical IDs or evidence.
     for candidate in context.external_candidates:
@@ -429,7 +443,12 @@ def plan(collection_id, data, provider, vault='personal', digest_budget=4096,
         config = {'version': VERSION, 'rules': RULES_VERSION, 'parser': PARSER_VERSION,
                   'schema': VERSION, 'prompt': PROMPT_VERSION, 'llm': provider.identity,
                   'temperature': 0, 'max_retries': 2, 'digest_budget_bytes': digest_budget,
+                  'request_budget_bytes': request_budget, 'context_version': CONTEXT_VERSION,
+                  'schema_hash': content_hash(EXTRACTION_SCHEMA), 'prompt_hash': content_hash(SYSTEM_PROMPT),
+                  'wire_version': WIRE_VERSION,
                   'context_mode': context.mode, 'external_candidates_hash': content_hash(context.external_candidates)}
+        scan_record = db.execute('SELECT * FROM collection_scans WHERE collection_id=?', (collection_id,)).fetchone()
+        config['source_policy'] = json.loads(scan_record['policy_json'])
         if hasattr(context, 'identity'):
             config['context_backend_identity'] = context.identity
         base = committed_revision(db, vault)
@@ -467,18 +486,26 @@ def plan(collection_id, data, provider, vault='personal', digest_budget=4096,
                           'source_date': None}
                 previous_error = None
                 for attempt in range(3):
-                    messages = extraction_messages(source, context.bundle(ledger, digest_budget))
-                    if previous_error:
-                        messages[0]['content'] += '\nValidation feedback: ' + canonical_json(previous_error)
-                    with db:
-                        ledger.event('provider_call', {'chunk_id': chunk['id'], 'attempt': attempt})
                     try:
-                        proposed = validate_extraction(provider.generate_structured('extract', EXTRACTION_SCHEMA,
-                            messages, {'temperature': 0, **provider.identity, 'schema': VERSION, 'prompt': PROMPT_VERSION}))
+                        model_config = {'temperature': 0, **provider.identity, 'schema': VERSION,
+                                        'prompt': PROMPT_VERSION, 'request_budget_bytes': request_budget}
+                        bundle = context.bundle(ledger, digest_budget)
+                        messages, budget, byte_count = bounded_messages(source, bundle, model_config,
+                                                                        request_budget, previous_error)
+                        with db:
+                            ledger.event('context_prepared', {'chunk_id': chunk['id'], 'request_bytes': byte_count,
+                                'budget': budget, 'request_hash': content_hash(messages),
+                                'retrieval_ids': [h['id'] for h in bundle.get('relevant_engrams', []) if h.get('id')]})
+                            ledger.event('provider_call', {'chunk_id': chunk['id'], 'attempt': attempt})
+                        generated = provider.generate_structured('extract', EXTRACTION_SCHEMA, messages, model_config)
+                        if getattr(provider, 'last_usage', None):
+                            with db:
+                                ledger.event('provider_usage', provider.last_usage)
+                        proposed = validate_extraction(generated)
                         spans = validate_anchors(proposed, raw, document, document['chunks'])
                         break
                     except (ValidationError, ProviderError, TimeoutError, OSError) as exc:
-                        previous_error = {'code': exc.code if isinstance(exc, ValidationError) else 'provider_unavailable',
+                        previous_error = {'code': exc.code if isinstance(exc, (ValidationError, ProviderError)) else 'provider_unavailable',
                                           'path': exc.path if isinstance(exc, ValidationError) else '$',
                                           'chunk_id': chunk['id']}
                         with db:
@@ -511,6 +538,10 @@ def plan(collection_id, data, provider, vault='personal', digest_budget=4096,
         counts = Counter(op['kind'] for op in operations)
         event_counts = Counter(dict(r)['event_type'] for r in db.execute('SELECT event_type FROM run_events WHERE job_id=?', (job_id,)))
         completed = db.execute('SELECT COUNT(*) FROM chunk_checkpoints WHERE job_id=?', (job_id,)).fetchone()[0]
+        context_events = [json.loads(r[0]) for r in db.execute(
+            "SELECT payload_redacted FROM run_events WHERE job_id=? AND event_type='context_prepared'", (job_id,))]
+        usages = [json.loads(r[0]) for r in db.execute(
+            "SELECT payload_redacted FROM run_events WHERE job_id=? AND event_type='provider_usage'", (job_id,))]
         report = {'version': VERSION, 'change_set_id': change_id, 'job_id': job_id,
                   'base_revision': base, 'status': status, 'config': config,
                   'inputs': {'collection_id': collection_id, 'vault_id': vault, 'documents': manifest},
@@ -518,11 +549,16 @@ def plan(collection_id, data, provider, vault='personal', digest_budget=4096,
                   'operations': operations, 'entities': ledger.staged('entities'),
                   'aliases': ledger.staged('aliases'), 'mentions': ledger.staged('mentions'),
                   'claims': ledger.staged('claims'), 'evidence': evidence,
-                  'warnings': context.warnings
-                              + stale_source_warnings(db, documents, vault),
+                  'warnings': context.warnings + json.loads(scan_record['warnings_json'])
+                              + stale_source_warnings(db, documents, vault, collection_id),
                   'metrics': {'files': len(documents), 'chunks': sum(len(d['chunks']) for d in documents),
                               'chunks_completed': completed, 'provider_calls': event_counts['provider_call'],
                               'validation_errors': event_counts['validation_error'], 'provider_errors': event_counts['provider_error'],
+                              'max_request_bytes': max((e['request_bytes'] for e in context_events), default=0),
+                              'context_entries_omitted': sum(sum(e['budget']['omitted_counts'].values()) for e in context_events),
+                              'llm_usage': {key: sum(u.get(key, 0) for u in usages)
+                                            for key in sorted({k for u in usages for k in u})} or None,
+                              'llm_cost': None,
                               'muninn_read_calls': context.read_calls, 'muninn_write_calls': 0},
                   'error': failure}
         payload = canonical_json(report)

@@ -15,7 +15,7 @@ VERSION = '1.0'
 RULES_VERSION = 'offline-1'
 PROMPT_VERSION = 'evidence-first-1'
 PARSER_VERSION = '1'
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 
 class ValidationError(ValueError):

@@ -1,0 +1,34 @@
+{
+  "description": "CLI option reference only; no implicit config-file loading or secret values",
+  "scan": {"data": "./data", "max_bytes": 5242880},
+  "plan": {
+    "vault": "personal",
+    "llm_provider": "fake",
+    "fixture": "./fixtures/offline-extraction.json",
+    "digest_bytes": 4096,
+    "request_bytes": 65536,
+    "context": "offline"
+  },
+  "real_llm_explicit_options": {
+    "llm_provider": "openai-compatible",
+    "llm_base_url": "https://api.openai.com/v1",
+    "llm_model": "CHOOSE_A_COMPATIBLE_MODEL",
+    "llm_api_key_env": "KNOWLEDGE_LLM_API_KEY",
+    "llm_local": false,
+    "llm_timeout": 30
+  },
+  "local_llm_explicit_options": {
+    "llm_provider": "openai-compatible",
+    "llm_base_url": "http://127.0.0.1:8000/v1",
+    "llm_model": "CHOOSE_A_LOCAL_MODEL",
+    "llm_api_key_env": null,
+    "llm_local": true
+  },
+  "publication": {
+    "backend": "muninn",
+    "muninn_url": "http://127.0.0.1:8475",
+    "observe_token_env": "MUNINN_OBSERVE_TOKEN",
+    "full_token_env": "MUNINN_FULL_TOKEN",
+    "requires_confirmation": true
+  }
+}

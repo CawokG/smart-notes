@@ -1,0 +1,129 @@
+{
+  "version": "1.0",
+  "kind": "stage5_validation_summary",
+  "incoming_sha": "72d1228fea4d4d033bbd1634225ece9fa0b64250",
+  "branch": "codex/prototype-stages",
+  "checked_date_europe_moscow": "2026-11-11",
+  "overall": "PARTIAL",
+  "production_v1_ready": false,
+  "offline": {
+    "status": "PASS",
+    "tests": 97,
+    "failures": 0,
+    "command": "python -m unittest discover -s tests -v"
+  },
+  "compileall": "PASS",
+  "diff_check": "PASS",
+  "demo": {
+    "status": "PASS",
+    "files": 5,
+    "chunks_completed": 57,
+    "fake_memories": 2,
+    "fake_posts_after_reimport": 2
+  },
+  "clean_install": {
+    "status": "PASS",
+    "python": "3.12.14",
+    "platform": "Linux x86-64",
+    "cli_calls": 9,
+    "all_exit_zero": true,
+    "fake_posts_after_reimport": 2
+  },
+  "http_llm_wire": {
+    "status": "PASS",
+    "scope": "controlled_synthetic_loopback_only"
+  },
+  "external_llm": {
+    "status": "BLOCKED",
+    "reason": "unconfigured_no_credentials"
+  },
+  "semantic_quality": {
+    "status": "NOTMEASURED",
+    "precision": null,
+    "recall": null,
+    "entity_resolution_accuracy": null,
+    "cost": null
+  },
+  "muninn": {
+    "binary": {
+      "download": "https://github.com/scrypster/muninndb/releases/download/v0.9.0/muninn-linux-amd64",
+      "platform": "linux/amd64",
+      "sha256": "4da4c959a6482c7608809a75501cd3c746875c1dcd9c7caf7e6d3052dbdefa5b",
+      "version": "v0.9.0"
+    },
+    "capability": {
+      "checked_at_utc": "2026-11-10T20:59:07.231435+00:00",
+      "status": "PASS_with_documented_limitations",
+      "http_calls": 530,
+      "active_marker_found": 205,
+      "exhaustive_marker": "UNSUPPORTED",
+      "temporary_storage_removed": true,
+      "daemon_stopped": true
+    },
+    "product": {
+      "checked_at_utc": "2026-11-10T20:59:28.069749+00:00",
+      "status": "PASS_with_documented_limitations",
+      "calls": {
+        "full_posts": 5,
+        "observe_reads": 38,
+        "refused_full_posts": 1
+      },
+      "ledger": {
+        "applied_outbox": 5,
+        "committed_claims": 5,
+        "manual_repair_outbox": 1
+      },
+      "checks": {
+        "explicit_observe_context": {
+          "cognitive_feedback": "unmeasured",
+          "fallback": "local ledger; optional native names never canonical IDs",
+          "read_calls": 4,
+          "result": "PASS",
+          "writes": 0
+        },
+        "injected_crash_after_real_POST_before_SQLite": {
+          "automatic": "needs_manual_repair",
+          "manual_known_id_exact_readback": "PASS",
+          "result": "PASS",
+          "resume_posts": 0
+        },
+        "injected_readback_failure_real_known_id_recovery": {
+          "result": "PASS",
+          "resume_posts": 0
+        },
+        "injected_response_loss_after_real_success": {
+          "result": "PASS",
+          "resume_posts": 0
+        },
+        "negative_exact_product_readback": "PASS",
+        "real_exhaustive_marker": "UNSUPPORTED; no list request/no POST retry",
+        "real_invalid_full_401": {
+          "result": "PASS",
+          "resume_posts": 0,
+          "write_attempts": 1
+        },
+        "scan_fake_plan_review_commit_status_resume_reimport": {
+          "create_posts": 1,
+          "result": "PASS"
+        }
+      },
+      "temporary_storage_removed": true,
+      "daemon_stopped": true
+    }
+  },
+  "supervisor_replays": {
+    "scanner_probes": "PASS",
+    "offline_suite_initial_95": "PASS",
+    "demo": "PASS",
+    "product_live": "PASS_with_documented_limitations",
+    "installed_package": "PASS"
+  },
+  "partial_requirements": [
+    "observe_hidden_cognitive_feedback_unmeasured",
+    "legacy_semantic_reconciliation_partial",
+    "non_linux_publication_unverified_or_unsupported",
+    "one_authoritative_ledger_required",
+    "known_4xx_terminal_manual_no_abandon_action"
+  ],
+  "complete_matrix": "docs/VALIDATION.md"
+}

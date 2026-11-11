@@ -1,0 +1,279 @@
+{
+  "version": "1.0",
+  "kind": "synthetic_fake_offline_demo",
+  "checked_at": "2026-11-10T20:58:25.159480Z",
+  "result": "PASS_with_documented_limitations",
+  "checks": {
+    "explicit_fake_provider": true,
+    "explicit_fake_backend": true,
+    "zero_muninn_calls_during_plan": true,
+    "repeat_import_zero_extra_posts": true,
+    "review_history_recorded": true,
+    "all_chunks_completed": true
+  },
+  "scan": {
+    "files": 5,
+    "warnings": []
+  },
+  "plan": {
+    "job_id": "job_d9f1669512b4fc4bb5e4c41d2dbdc52e46c052ac4040f38a8a980ff48d012aec",
+    "config": {
+      "context_mode": "offline_ledger_only",
+      "context_version": "bounded-context-1",
+      "digest_budget_bytes": 4096,
+      "external_candidates_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "llm": {
+        "fixture_hash": "095ecb44616d0f73a86e96e765b89113820df39d706358ba9edfa4c27a159ce1",
+        "model": "scripted-fixture-1",
+        "provider": "fake"
+      },
+      "max_retries": 2,
+      "parser": "1",
+      "prompt": "evidence-first-1",
+      "prompt_hash": "6afed33ffeb4d683f4a66d4fc2c07a34fe6202966f0913fa479eb88760c35dee",
+      "request_budget_bytes": 65536,
+      "rules": "offline-1",
+      "schema": "1.0",
+      "schema_hash": "ac7dca7eb5c53a3cb1236efbf3fbeb5d8c241ee05002a0dba32527661155b50f",
+      "source_policy": {
+        "max_bytes": 5242880,
+        "version": "source-intake-1"
+      },
+      "temperature": 0,
+      "version": "1.0",
+      "wire_version": "openai-chat-json-1"
+    },
+    "summary": {
+      "add_alias": 4,
+      "add_evidence": 1,
+      "conflict_warning": 1,
+      "create_claim": 2,
+      "create_entity": 4,
+      "defer": 7,
+      "link_claim_entity": 4,
+      "skip_duplicate": 0
+    },
+    "metrics": {
+      "chunks": 57,
+      "chunks_completed": 57,
+      "context_entries_omitted": 0,
+      "files": 5,
+      "llm_cost": null,
+      "llm_usage": null,
+      "max_request_bytes": 27792,
+      "muninn_read_calls": 0,
+      "muninn_write_calls": 0,
+      "provider_calls": 57,
+      "provider_errors": 0,
+      "validation_errors": 0
+    },
+    "warnings": [
+      {
+        "detail": "Explicit offline context; no backend calls made.",
+        "reason": "offline_ledger_only"
+      }
+    ]
+  },
+  "publication": {
+    "status": "complete_with_deferred",
+    "fake_memories": 2,
+    "fake_posts_before_repeat": 2,
+    "fake_posts_after_repeat": 2,
+    "unapplied_operation_ids": [
+      "op_101ebde9bd6482ae2159557f1c12f7ec1d5770149c6824f5137e3cf76da7b5cb",
+      "op_38e5e6488a94dc3d26eab0156a42307af473a0c1188c064f7513787a907ca4c5",
+      "op_630ddcbeb604b1d13f5134f908d644dee5e83dbb81366059da9bf29c27c03ce4",
+      "op_729dba861e02b5194e0a842e355287a82bb000900bbf8b40116859acee6707c5",
+      "op_73ef7be77e80bc5dee23fe5aa1dd7695e5cf79a8f5331896430344f529227d88",
+      "op_95134551e1970140eee34f1b2f4943008b2421836bd368e7447caf8ff290cec2",
+      "op_a99476c7593ff7661ffddfc3e08fe16671e023a68eb9d95be286141a0076cc19",
+      "op_b3bb336917b30b0525e2b3de766cfc133823128a7a03b7b94aa549c293b167a2"
+    ]
+  },
+  "semantic_quality": {
+    "precision": null,
+    "recall": null,
+    "entity_resolution_accuracy": null,
+    "status": "NOT_MEASURED_scripted_fixture"
+  },
+  "external_llm_live": "BLOCKED_unconfigured_no_credentials",
+  "limits": [
+    "FakeLLM scripts proposals; it does not understand arbitrary notes.",
+    "Fake marker recovery is stronger than pinned MuninnDB; see compatibility matrix.",
+    "This demo is not a semantic quality measurement or production readiness claim."
+  ],
+  "duration_seconds_by_step": {
+    "scan": 0.0994,
+    "change-set": 0.3923,
+    "review": 0.106,
+    "review-applied": 0.0993,
+    "commit": 0.1509,
+    "status": 0.1214,
+    "resume": 0.1588,
+    "repeat-scan": 0.0858,
+    "repeat-plan": 0.383,
+    "repeat-commit": 0.1793
+  },
+  "commands": [
+    {
+      "step": "scan",
+      "argv": [
+        "python",
+        "-m",
+        "knowledge_ingestion.cli",
+        "scan",
+        "/workspace/smart-notes/work/stage5-demo/sources",
+        "--data",
+        "/workspace/smart-notes/work/stage5-demo/data"
+      ]
+    },
+    {
+      "step": "change-set",
+      "argv": [
+        "python",
+        "-m",
+        "knowledge_ingestion.cli",
+        "plan",
+        "--collection",
+        "col_d2269979017c721d81635877ef6422212264850a9f32879316736f5b8c3ddf71",
+        "--data",
+        "/workspace/smart-notes/work/stage5-demo/data",
+        "--llm-provider",
+        "fake",
+        "--fixture",
+        "/workspace/smart-notes/fixtures/offline-extraction.json",
+        "--output",
+        "/workspace/smart-notes/work/stage5-demo/original-change-set.json"
+      ]
+    },
+    {
+      "step": "review",
+      "argv": [
+        "python",
+        "-m",
+        "knowledge_ingestion.cli",
+        "review",
+        "--change-set",
+        "chg_31edd0661253aedb46b9e648588f60a83f3ed15fdfeb406424bab5ecb5899ef1",
+        "--data",
+        "/workspace/smart-notes/work/stage5-demo/data"
+      ]
+    },
+    {
+      "step": "review-applied",
+      "argv": [
+        "python",
+        "-m",
+        "knowledge_ingestion.cli",
+        "review",
+        "--change-set",
+        "chg_31edd0661253aedb46b9e648588f60a83f3ed15fdfeb406424bab5ecb5899ef1",
+        "--data",
+        "/workspace/smart-notes/work/stage5-demo/data",
+        "--decisions",
+        "/workspace/smart-notes/work/stage5-demo/review-decisions.json",
+        "--actor",
+        "synthetic-demo"
+      ]
+    },
+    {
+      "step": "commit",
+      "argv": [
+        "python",
+        "-m",
+        "knowledge_ingestion.cli",
+        "commit",
+        "--change-set",
+        "chg_31edd0661253aedb46b9e648588f60a83f3ed15fdfeb406424bab5ecb5899ef1",
+        "--data",
+        "/workspace/smart-notes/work/stage5-demo/data",
+        "--backend",
+        "fake",
+        "--fake-store",
+        "/workspace/smart-notes/work/stage5-demo/FAKE-backend.sqlite3",
+        "--actor",
+        "synthetic-demo",
+        "--yes"
+      ]
+    },
+    {
+      "step": "status",
+      "argv": [
+        "python",
+        "-m",
+        "knowledge_ingestion.cli",
+        "status",
+        "--job",
+        "job_d9f1669512b4fc4bb5e4c41d2dbdc52e46c052ac4040f38a8a980ff48d012aec",
+        "--data",
+        "/workspace/smart-notes/work/stage5-demo/data"
+      ]
+    },
+    {
+      "step": "resume",
+      "argv": [
+        "python",
+        "-m",
+        "knowledge_ingestion.cli",
+        "resume",
+        "--job",
+        "job_d9f1669512b4fc4bb5e4c41d2dbdc52e46c052ac4040f38a8a980ff48d012aec",
+        "--data",
+        "/workspace/smart-notes/work/stage5-demo/data",
+        "--backend",
+        "fake",
+        "--fake-store",
+        "/workspace/smart-notes/work/stage5-demo/FAKE-backend.sqlite3"
+      ]
+    },
+    {
+      "step": "repeat-scan",
+      "argv": [
+        "python",
+        "-m",
+        "knowledge_ingestion.cli",
+        "scan",
+        "/workspace/smart-notes/work/stage5-demo/sources",
+        "--data",
+        "/workspace/smart-notes/work/stage5-demo/data"
+      ]
+    },
+    {
+      "step": "repeat-plan",
+      "argv": [
+        "python",
+        "-m",
+        "knowledge_ingestion.cli",
+        "plan",
+        "--collection",
+        "col_d2269979017c721d81635877ef6422212264850a9f32879316736f5b8c3ddf71",
+        "--data",
+        "/workspace/smart-notes/work/stage5-demo/data",
+        "--llm-provider",
+        "fake",
+        "--fixture",
+        "/workspace/smart-notes/fixtures/offline-extraction.json"
+      ]
+    },
+    {
+      "step": "repeat-commit",
+      "argv": [
+        "python",
+        "-m",
+        "knowledge_ingestion.cli",
+        "commit",
+        "--change-set",
+        "chg_25945594add69371480091dbcf3c8448a6fa82c151e7e1d73adfb77a8dc203fc",
+        "--data",
+        "/workspace/smart-notes/work/stage5-demo/data",
+        "--backend",
+        "fake",
+        "--fake-store",
+        "/workspace/smart-notes/work/stage5-demo/FAKE-backend.sqlite3",
+        "--actor",
+        "synthetic-demo",
+        "--yes"
+      ]
+    }
+  ]
+}
